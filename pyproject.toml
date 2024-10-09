@@ -1,0 +1,15 @@
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+check_untyped_defs = true
+
+[tool.django-stubs]
+django_settings_module = "henhouse.settings"
+
+[[tool.mypy.overrides]]
+module = [
+    "uuid_extensions",
+]
+ignore_missing_imports = true

@@ -4,10 +4,25 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
+django = {version = "*", extras = ["argon2"]}
 django-ninja = "*"
+psycopg2 = "*"
+django-redis = "*"
+django-silk = "*"
+django-cors-headers = "*"
+django-csp = "*"
+uuid7 = "*"
 
 [dev-packages]
+coverage = "*"
+codecov = "*"
+unittest-xml-reporting = "*"
+black = "24.4.2"
+isort = "*"
+django-stubs = { version = "*", extras = ["compatible-mypy"] }
+tblib = "*"
+watchdog = "*"
+inotify = "*"
 
 [requires]
 python_version = "3.13"

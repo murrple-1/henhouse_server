@@ -1,0 +1,84 @@
+version: 2.1
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build_latest:
+          filters:
+            branches:
+              only: master
+            tags:
+              ignore: /.*/
+      - build_tag:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - test
+      - lint
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.13.0
+        environment:
+          PIPENV_VERBOSITY: -1
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: pipenv setup
+          command: |
+            pip install -U pip
+            pip install -U pipenv
+      - run:
+          name: pipenv install
+          command: pipenv sync --dev
+      - save_cache:
+          key: dependency-cache-{{ checksum "Pipfile.lock" }}
+          paths:
+            - "~/.local/share/virtualenvs/"
+            - "~/.pyenv/"
+      - run:
+          name: Test
+          command: pipenv run coverage run manage.py test
+          environment:
+            TEST_RUNNER_TYPE: xml
+            TEST_OUTPUT_VERBOSE: 2
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-results/
+      - run:
+          name: codecov
+          command: pipenv run codecov -X gcov
+
+  lint:
+    docker:
+      - image: cimg/python:3.12.0
+        environment:
+          PIPENV_VERBOSITY: -1
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: pipenv setup
+          command: |
+            pip install -U pip
+            pip install -U pipenv
+      - run:
+          name: pipenv install
+          command: pipenv sync --dev
+      - save_cache:
+          key: dependency-cache-{{ checksum "Pipfile.lock" }}
+          paths:
+            - "~/.local/share/virtualenvs/"
+            - "~/.pyenv/"
+      - run:
+          name: black
+          command: pipenv run black --check .
+      - run:
+          name: isort
+          command: pipenv run isort --check **/*.py

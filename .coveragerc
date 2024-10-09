@@ -1,0 +1,13 @@
+[coverage:run]
+include =
+    art/*
+omit =
+    art/tests/*
+    art/migrations/*
+dynamic_context = test_function
+
+[coverage:report]
+skip_empty = True
+
+[coverage:html]
+show_contexts = True
