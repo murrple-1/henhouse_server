@@ -6,12 +6,14 @@ name = "pypi"
 [packages]
 django = {version = "*", extras = ["argon2"]}
 django-ninja = "*"
-psycopg2 = "*"
+uvicorn = "*"
+psycopg = {version = "*", extras = ["binary"]}
 django-redis = "*"
 django-silk = "*"
 django-cors-headers = "*"
 django-csp = "*"
 uuid7 = "*"
+python-redis-lock = {version = "*", extras = ["django"]}
 
 [dev-packages]
 coverage = "*"

@@ -78,7 +78,7 @@ REDIS_URL = os.getenv("APP_REDIS_URL", "redis://redis:6379")
 if os.getenv("APP_IN_DOCKER", "false").lower() == "true":
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("APP_DB_NAME", "postgres"),
             "USER": os.getenv("APP_DB_USER", "postgres"),
             "PASSWORD": os.getenv("APP_DB_PASSWORD", "password"),
@@ -123,6 +123,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+    {
+        "NAME": "henhouse.password_validation.HasLowercaseValidator",
+    },
+    {
+        "NAME": "henhouse.password_validation.HasUppercaseValidator",
+    },
+    {
+        "NAME": "henhouse.password_validation.HasDigitValidator",
+    },
+    {
+        "NAME": "henhouse.password_validation.HasSpecialCharacterValidator",
     },
 ]
 

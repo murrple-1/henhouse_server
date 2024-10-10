@@ -18,6 +18,48 @@ workflows:
       - test
       - lint
 jobs:
+  build_latest:
+    docker:
+      - image: docker:20
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Docker Build
+          command: >
+            docker build
+            -t henhouse_server:latest
+            --progress=plain
+            --build-arg BUILD_ENV=production
+            .
+      - run:
+          name: Docker Upload
+          command: |
+            docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+            docker tag henhouse_server:latest $DOCKER_USERNAME/henhouse_server:latest
+            docker push $DOCKER_USERNAME/henhouse_server:latest
+
+  build_tag:
+    docker:
+      - image: docker:20
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Docker Build
+          command: >
+            docker build
+            -t henhouse_server:latest
+            --progress=plain
+            --build-arg BUILD_ENV=production
+            .
+      - run:
+          name: Docker Upload
+          command: |
+            docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+            docker tag henhouse_server:latest $DOCKER_USERNAME/henhouse_server:$CIRCLE_TAG
+            docker push $DOCKER_USERNAME/henhouse_server:$CIRCLE_TAG
+
   test:
     docker:
       - image: cimg/python:3.13.0

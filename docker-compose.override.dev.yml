@@ -1,0 +1,32 @@
+services:
+  caddy:
+    volumes:
+      - ./webserver/Caddyfile.dev:/etc/caddy/Caddyfile
+  henhouse_server:
+    image: henhouse_server
+    command: >
+      sh -c "
+        while ! python ./manage.py checkready; do
+          sleep 0.1
+        done
+
+        python ./manage.py collectstatic --noinput &
+
+        python ./manage.py migrate
+
+        exec uvicorn \\
+          --reload \\
+          --host 0.0.0.0 \\
+          --port 8000 \\
+          henhouse.asgi:application
+      "
+    build:
+      context: ./
+    environment:
+      APP_IN_DOCKER: 'true'
+      # jemalloc configuration. See https://github.com/jemalloc/jemalloc/blob/dev/TUNING.md
+      MALLOC_CONF: background_thread:true,max_background_threads:1,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000
+    expose:
+      - '8000'
+    volumes:
+      - ./:/code/

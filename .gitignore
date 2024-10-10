@@ -166,3 +166,4 @@ pyrightconfig.json
 test-results/
 local_settings.py
 _static/
+docker-compose.override.yml

@@ -1,0 +1,39 @@
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - henhouse_server_net
+  postgresql:
+    image: postgres:17-alpine
+    shm_size: '256m'
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - henhouse_server_net
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - '8000:8000'
+    volumes:
+      - caddy_data:/data/
+      - django_static:/static/
+    networks:
+      - default
+      - henhouse_server_net
+  henhouse_server:
+    env_file:
+      - .env
+    volumes:
+      - django_static:/code/_static/
+    networks:
+      - default  # necessary, because functionality requires making calls to the external internet
+      - henhouse_server_net
+volumes:
+  db_data:
+  caddy_data:
+  django_static:
+networks:
+  henhouse_server_net:
+    internal: true
