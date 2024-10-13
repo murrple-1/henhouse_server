@@ -125,16 +125,16 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
     {
-        "NAME": "henhouse.password_validation.HasLowercaseValidator",
+        "NAME": "app_admin.password_validation.HasLowercaseValidator",
     },
     {
-        "NAME": "henhouse.password_validation.HasUppercaseValidator",
+        "NAME": "app_admin.password_validation.HasUppercaseValidator",
     },
     {
-        "NAME": "henhouse.password_validation.HasDigitValidator",
+        "NAME": "app_admin.password_validation.HasDigitValidator",
     },
     {
-        "NAME": "henhouse.password_validation.HasSpecialCharacterValidator",
+        "NAME": "app_admin.password_validation.HasSpecialCharacterValidator",
     },
 ]
 
