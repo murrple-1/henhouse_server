@@ -1,3 +1,4 @@
+import datetime
 import os
 from pathlib import Path
 
@@ -306,6 +307,8 @@ elif _test_runner_type == "timed":
     TEST_SLOW_TEST_THRESHOLD = float(os.getenv("TEST_SLOW_TEST_THRESHOLD", "0.5"))
 else:
     raise RuntimeError("unknown 'TEST_RUNNER_TYPE'")
+
+TOKEN_EXPIRY_INTERVAL = datetime.timedelta(days=14)
 
 try:
     from .local_settings import *

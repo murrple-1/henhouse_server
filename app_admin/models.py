@@ -1,5 +1,10 @@
+import binascii
+import os
+from typing import Any
+
 # TODO replace with regular `uuid` module when finalized in Python
 import uuid_extensions
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
@@ -41,3 +46,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+
+def generate_token_key() -> str:
+    return binascii.hexlify(os.urandom(20)).decode()
+
+
+class Token(models.Model):
+    key = models.CharField(primary_key=True, max_length=64, default=generate_token_key)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="tokens", on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args: Any, **kwargs: Any):
+        if not self.key:
+            self.key = generate_token_key()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.key

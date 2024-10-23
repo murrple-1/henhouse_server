@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as UserAdmin_
 
-from app_admin.models import User
+from app_admin.models import Token, User
 
 
 @admin.register(User)
@@ -40,3 +40,10 @@ class UserAdmin(UserAdmin_):
             },
         ),
     )
+
+
+@admin.register(Token)
+class TokenAdmin(admin.ModelAdmin):
+    list_display = ["key", "user__email"]
+    list_select_related = ["user"]
+    search_fields = ["key", "user__email"]

@@ -3,6 +3,14 @@ from ninja import ModelSchema
 from art.models import Chapter, Story, Tag
 
 
+class StoryInSchema(ModelSchema):
+    tags: list[str]
+
+    class Meta:
+        model = Story
+        fields = ["title"]
+
+
 class StoryOutSchema(ModelSchema):
     class Meta:
         model = Story
