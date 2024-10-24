@@ -6,7 +6,7 @@ workflows:
       - build_latest:
           filters:
             branches:
-              only: master
+              only: main
             tags:
               ignore: /.*/
       - build_tag:
