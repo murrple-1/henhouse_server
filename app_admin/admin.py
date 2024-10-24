@@ -7,17 +7,19 @@ from app_admin.models import Token, User
 @admin.register(User)
 class UserAdmin(UserAdmin_):
     list_display = [
+        "username",
         "email",
         "created_at",
         "is_staff",
         "is_active",
+        "is_superuser",
     ]
-    list_editable = ["is_staff", "is_active"]
+    list_editable = ["is_staff", "is_active", "is_superuser"]
     list_filter = ["is_active", "is_staff"]
-    search_fields = ["email"]
-    ordering = ["email"]
+    search_fields = ["username", "email"]
+    ordering = ["username"]
     fieldsets = (
-        (None, {"fields": ("email", "password", "last_login")}),
+        (None, {"fields": ("username", "email", "password", "last_login")}),
         (
             "Permissions",
             {

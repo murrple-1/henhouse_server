@@ -247,6 +247,11 @@ else:
         },
     }
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "app_admin.auth_backends.EmailBackend",
+]
+
 CSRF_TRUSTED_ORIGINS = (
     csrf_trusted_origins.split(",")
     if (csrf_trusted_origins := os.getenv("APP_CSRF_TRUSTED_ORIGINS"))

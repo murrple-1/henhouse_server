@@ -17,4 +17,4 @@ class StoryAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ["name"]
+    list_display = ["name", "uuid"]

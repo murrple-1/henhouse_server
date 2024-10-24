@@ -37,6 +37,7 @@ class Migration(migrations.Migration):
                         default=uuid_extensions.uuid7, primary_key=True, serialize=False
                     ),
                 ),
+                ("username", models.CharField(max_length=64, unique=True)),
                 ("email", models.EmailField(max_length=254, unique=True)),
                 ("is_staff", models.BooleanField(default=False)),
                 ("is_active", models.BooleanField(default=True)),

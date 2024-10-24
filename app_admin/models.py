@@ -37,12 +37,14 @@ class UserManager(BaseUserManager["User"]):
 class User(AbstractBaseUser, PermissionsMixin):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     email = models.EmailField(unique=True)
+    username = models.CharField(max_length=64, unique=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)
     attributes = models.JSONField(null=False, blank=True, default=dict)
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "username"
+    EMAIL_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()

@@ -40,6 +40,8 @@ class HttpBasicAuth(_HttpBasicAuth):
     ) -> Optional[Any]:
         user = authenticate(request, username=username, password=password)
         if user:
+            user.last_login = timezone.now()
+            user.save(update_fields=("last_login",))
             request.user = user
         return user
 
@@ -69,7 +71,10 @@ class HttpBearer(_HttpBearer):
             token_obj.expires_at = now + _TOKEN_EXPIRY_INTERVAL
             token_obj.save(update_fields=("expires_at",))
 
-        request.user = token_obj.user
+        user = token_obj.user
+        user.last_login = timezone.now()
+        user.save(update_fields=("last_login",))
+        request.user = user
         return token_obj
 
 
