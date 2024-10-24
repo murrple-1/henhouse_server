@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@4.0.1
+  codecov: codecov/codecov@5.0.0
 workflows:
   version: 2
   build_and_test:
@@ -94,7 +94,8 @@ jobs:
           path: test-results/
       - store_artifacts:
           path: test-results/
-      - codecov/upload
+      - codecov/upload:
+          dir: test-results/
 
   lint:
     docker:
