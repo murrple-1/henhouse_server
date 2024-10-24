@@ -17,8 +17,6 @@ python-redis-lock = {version = "*", extras = ["django"]}
 
 [dev-packages]
 coverage = "*"
-codecov = "*"
-unittest-xml-reporting = "*"
 black = "24.4.2"
 isort = "*"
 django-stubs = { version = "*", extras = ["compatible-mypy"] }
