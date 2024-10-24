@@ -65,6 +65,8 @@ jobs:
       - image: cimg/python:3.13
         environment:
           PIPENV_VERBOSITY: -1
+    orbs:
+      codecov: codecov/codecov@4.0.1
     steps:
       - checkout
       - restore_cache:
@@ -92,9 +94,7 @@ jobs:
           path: test-results/
       - store_artifacts:
           path: test-results/
-      - run:
-          name: codecov
-          command: pipenv run codecov -X gcov
+      - codecov/upload
 
   lint:
     docker:
