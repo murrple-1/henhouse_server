@@ -1,9 +1,12 @@
 [coverage:run]
 include =
     art/*
+    app_admin/*
 omit =
     art/tests/*
     art/migrations/*
+    app_admin/tests/*
+    app_admin/migrations/*
 dynamic_context = test_function
 
 [coverage:report]
