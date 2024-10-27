@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from art.models import Chapter, Story, Tag
+from art.models import Chapter, ChapterReport, Story, StoryReport, Tag
 
 
 class ChaptersInline(admin.TabularInline):
@@ -18,3 +18,13 @@ class StoryAdmin(admin.ModelAdmin):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ["name", "uuid"]
+
+
+@admin.register(StoryReport)
+class StoryReportAdmin(admin.ModelAdmin):
+    list_display = ["story__title", "kind"]
+
+
+@admin.register(ChapterReport)
+class ChapterReportAdmin(admin.ModelAdmin):
+    list_display = ["chapter__name", "kind"]

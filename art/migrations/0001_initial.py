@@ -50,11 +50,18 @@ class Migration(migrations.Migration):
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
-                ("published_at", models.DateTimeField(null=True, blank=True)),
                 (
                     "tags",
                     models.ManyToManyField(
                         related_name="stories", to="art.tag", blank=True
+                    ),
+                ),
+                (
+                    "favorites_of",
+                    models.ManyToManyField(
+                        blank=True,
+                        related_name="favorite_stories",
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
@@ -81,6 +88,74 @@ class Migration(migrations.Migration):
                 ),
                 ("index", models.PositiveIntegerField()),
                 ("name", models.CharField(max_length=256)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("published_at", models.DateTimeField(null=True, blank=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name="StoryReport",
+            fields=[
+                (
+                    "uuid",
+                    models.UUIDField(
+                        default=uuid_extensions.uuid7,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "kind",
+                    models.IntegerField(
+                        choices=[(0, "Other"), (1, "Dmca"), (2, "Abuse")]
+                    ),
+                ),
+                ("details", models.CharField(max_length=1024)),
+                (
+                    "story",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="art.story"
+                    ),
+                ),
+                (
+                    "submitter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ChapterReport",
+            fields=[
+                (
+                    "uuid",
+                    models.UUIDField(
+                        default=uuid_extensions.uuid7,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "kind",
+                    models.IntegerField(
+                        choices=[(0, "Other"), (1, "Dmca"), (2, "Abuse")]
+                    ),
+                ),
+                ("details", models.CharField(max_length=1024)),
+                (
+                    "chapter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="art.chapter"
+                    ),
+                ),
+                (
+                    "submitter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AddConstraint(

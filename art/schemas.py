@@ -29,7 +29,7 @@ class StoryOutSchema(ModelSchema):
 class StoryOutDetailsSchema(ModelSchema):
     class Meta:
         model = Story
-        fields = ["uuid", "title", "creator", "created_at", "published_at", "tags"]
+        fields = ["uuid", "title", "creator", "created_at", "tags"]
 
 
 class ChapterInSchema(ModelSchema):
@@ -54,7 +54,15 @@ class ChapterOutSchema(ModelSchema):
 class ChapterOutDetailsSchema(ModelSchema):
     class Meta:
         model = Chapter
-        fields = ["uuid", "index", "name", "markdown", "story"]
+        fields = [
+            "uuid",
+            "index",
+            "name",
+            "markdown",
+            "story",
+            "created_at",
+            "published_at",
+        ]
 
 
 class TagOutSchema(ModelSchema):
