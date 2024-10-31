@@ -1,6 +1,7 @@
 from typing import Optional
 
-from ninja import ModelSchema
+from ninja import ModelSchema, Schema
+from pydantic import field_validator
 
 from art.models import Chapter, Story, Tag
 
@@ -69,3 +70,8 @@ class TagOutSchema(ModelSchema):
     class Meta:
         model = Tag
         fields = ["uuid", "name"]
+
+
+class ListSchema(Schema):
+    search: str | None = None
+    sort: list[str] = []

@@ -14,6 +14,8 @@ django-cors-headers = "*"
 django-csp = "*"
 uuid7 = "*"
 python-redis-lock = {version = "*", extras = ["django"]}
+pyparsing = "*"
+python-dateutil = "*"
 
 [dev-packages]
 coverage = "*"

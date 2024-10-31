@@ -5,6 +5,7 @@ from django.db.models import Max, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest
 from django.utils import timezone
+from ninja import Query
 from ninja.pagination import RouterPaginated
 
 from app_admin.security import auth_optional, must_auth
@@ -14,6 +15,7 @@ from art.schemas import (
     ChapterOutDetailsSchema,
     ChapterOutSchema,
     ChapterPatchInSchema,
+    ListSchema,
     StoryInSchema,
     StoryOutDetailsSchema,
     StoryOutSchema,
@@ -25,7 +27,7 @@ router = RouterPaginated()
 
 
 @router.get("/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"])
-def list_stories(request: HttpRequest):
+def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
     return Story.objects.all()
 
 
