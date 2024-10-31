@@ -2,7 +2,7 @@
 profile = "black"
 
 [tool.mypy]
-plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+plugins = ["mypy_django_plugin.main"]
 check_untyped_defs = true
 
 [tool.django-stubs]

@@ -10,11 +10,13 @@ from art.models import Story
 
 class ApiTest(TestCase):
     user: ClassVar[User]
+    test_client: ClassVar[TestClient]
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
 
-        self.test_client = TestClient(router)
+        cls.test_client = TestClient(router)
 
     @classmethod
     def setUpTestData(cls):
