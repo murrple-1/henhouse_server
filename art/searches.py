@@ -7,10 +7,9 @@ from django.http import HttpRequest
 from query_utils.search.convertto import UuidList
 
 search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
-    "usercategory": {
+    "story": {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
-        "text": lambda request, search_obj: Q(text__icontains=search_obj),
-        "text_exact": lambda request, search_obj: Q(text__iexact=search_obj),
+        "title_exact": lambda request, search_obj: Q(title__iexact=search_obj),
     },
 }
 
