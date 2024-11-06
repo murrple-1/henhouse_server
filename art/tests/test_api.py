@@ -25,31 +25,26 @@ class ApiTest(TestCase):
         cls.user = User.objects.create_user("test@test.com", None)
 
     def test_list_stories(self):
-        response = self.test_client.get("/story")
+        response = self.test_client.get('/story?search=title:"test"')
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"items": [], "count": 0})
 
         story = Story.objects.create(title="Test Story", creator=ApiTest.user)
 
         response = self.test_client.get("/story")
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
             response.json(),
             {
-                "items": [
-                    {
-                        "title": "Test Story",
-                        "uuid": str(story.uuid),
-                    }
-                ],
-                "count": 1,
+                "items": [],
+                "count": 0,
             },
         )
 
         response = self.test_client.get("/story", user=ApiTest.user)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
             response.json(),
             {

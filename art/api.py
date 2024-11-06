@@ -1,7 +1,8 @@
 import uuid
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
-from django.db.models import Max, Value
+from django.db.models import Max, Q, QuerySet, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest
 from django.utils import timezone
@@ -28,7 +29,20 @@ router = RouterPaginated()
 
 @router.get("/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"])
 def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
-    return Story.objects.all()
+    user = request.user
+    filter_args: list[Q]
+    if user.is_authenticated:
+        filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+    else:
+        filter_args = [Q(published_at__isnull=False)]
+
+    filter_args += list_params.get_filter_args("story", request)
+
+    return (
+        Story.annotate_from_chapters(Story.objects.all())
+        .filter(*filter_args)
+        .order_by(*list_params.get_order_by_args("story"))
+    )
 
 
 @router.get(
@@ -38,16 +52,29 @@ def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
     tags=["story"],
 )
 def story_details(request: HttpRequest, story_id: uuid.UUID):
+    user = request.user
+    filter_args: list[Q]
+    if user.is_authenticated:
+        filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+    else:
+        filter_args = [Q(published_at__isnull=False)]
+
     try:
-        return Story.objects.get(uuid=story_id)
+        return (
+            Story.annotate_from_chapters(Story.objects.all())
+            .filter(*filter_args)
+            .get(uuid=story_id)
+        )
     except Story.DoesNotExist:
         raise Http404
 
 
 @router.post("/story", response=StoryOutSchema, auth=must_auth, tags=["story"])
 def create_story(request: HttpRequest, input_story: StoryInSchema):
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
     with transaction.atomic():
-        story = Story.objects.create(creator=request.user, title=input_story.title)
+        story = Story.objects.create(creator=user, title=input_story.title)
         story.tags.set(Tag.objects.filter(uuid__in=frozenset(input_story.tags)))
 
         return story
@@ -59,9 +86,11 @@ def create_story(request: HttpRequest, input_story: StoryInSchema):
 def patch_story(
     request: HttpRequest, story_id: uuid.UUID, input_story: StoryPatchInSchema
 ):
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
     with transaction.atomic():
         try:
-            story = Story.objects.get(creator=request.user, uuid=story_id)
+            story = Story.objects.get(creator=user, uuid=story_id)
         except Story.DoesNotExist:
             raise Http404
 
@@ -92,7 +121,9 @@ def patch_story(
     "/story/{story_id}", response={204: None}, auth=must_auth, tags=["story"]
 )
 def delete_story(request: HttpRequest, story_id: uuid.UUID):
-    count, _ = Story.objects.filter(creator=request.user, uuid=story_id).delete()
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
+    count, _ = Story.objects.filter(creator=user, uuid=story_id).delete()
     if not count:
         raise Http404
 
@@ -106,7 +137,27 @@ def delete_story(request: HttpRequest, story_id: uuid.UUID):
     tags=["chapter"],
 )
 def list_chapters(request: HttpRequest, story_id: uuid.UUID):
-    return Chapter.objects.filter(story__uuid=story_id)
+    user = request.user
+    filter_args: list[Q]
+    if user.is_authenticated:
+        filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+    else:
+        filter_args = [Q(published_at__isnull=False)]
+
+    story: Story
+    try:
+        story = (
+            Story.annotate_from_chapters(Story.objects.all())
+            .filter(*filter_args)
+            .get(uuid=story_id)
+        )
+    except Story.DoesNotExist:
+        raise Http404
+
+    if user.is_authenticated and story.creator_id == user.pk:
+        return story.chapters.all()
+    else:
+        return story.chapters.filter(published_at__isnull=False)
 
 
 @router.get(
@@ -116,8 +167,18 @@ def list_chapters(request: HttpRequest, story_id: uuid.UUID):
     tags=["chapter"],
 )
 def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
+    user = request.user
+
+    accessible_chapters: QuerySet[Chapter]
+    if user.is_authenticated:
+        accessible_chapters = Chapter.objects.filter(
+            Q(story__creator=user) | Q(published_at__isnull=False)
+        )
+    else:
+        accessible_chapters = Chapter.objects.filter(published_at__isnull=False)
+
     try:
-        return Chapter.objects.get(uuid=chapter_id)
+        return accessible_chapters.get(uuid=chapter_id)
     except Chapter.DoesNotExist:
         raise Http404
 
@@ -131,9 +192,11 @@ def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
 def create_chapter(
     request: HttpRequest, story_id: uuid.UUID, input_chapter: ChapterInSchema
 ):
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
     with transaction.atomic():
         try:
-            story = Story.objects.get(creator=request.user, uuid=story_id)
+            story = Story.objects.get(creator=user, uuid=story_id)
         except Story.DoesNotExist:
             raise Http404
 
@@ -157,9 +220,11 @@ def create_chapter(
 def patch_chapter(
     request: HttpRequest, chapter_id: uuid.UUID, input_chapter: ChapterPatchInSchema
 ):
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
     with transaction.atomic():
         try:
-            chapter = Chapter.objects.get(story__creator=request.user, uuid=chapter_id)
+            chapter = Chapter.objects.get(story__creator=user, uuid=chapter_id)
         except Chapter.DoesNotExist:
             raise Http404
 
@@ -183,9 +248,9 @@ def patch_chapter(
     "/chapter/{chapter_id}", response={204: None}, auth=must_auth, tags=["chapter"]
 )
 def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
-    count, _ = Chapter.objects.filter(
-        story__creator=request.user, uuid=chapter_id
-    ).delete()
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
+    count, _ = Chapter.objects.filter(story__creator=user, uuid=chapter_id).delete()
     if not count:
         raise Http404
 

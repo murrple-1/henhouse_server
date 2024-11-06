@@ -18,6 +18,17 @@ class Story(models.Model):
     )
 
     @staticmethod
+    def annotate_from_chapters(
+        qs: models.QuerySet["Story"],
+    ) -> models.QuerySet["Story"]:
+        chapters = Chapter.objects.filter(story_id=models.OuterRef("uuid"))
+        return qs.annotate(
+            published_at=chapters.annotate(
+                min_published_at=models.Min("published_at")
+            ).values("min_published_at")
+        )
+
+    @staticmethod
     def annotate_search_vectors(
         qs: models.QuerySet["Story"],
     ) -> models.QuerySet["Story"]:
@@ -76,7 +87,7 @@ class ReportKind(models.IntegerChoices):
 class StoryReport(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     story = models.ForeignKey(Story, on_delete=models.CASCADE)
-    kind = models.IntegerField(choices=ReportKind)
+    kind = models.IntegerField(choices=ReportKind.choices)
     details = models.CharField(max_length=1024)
     submitter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
@@ -84,6 +95,6 @@ class StoryReport(models.Model):
 class ChapterReport(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
-    kind = models.IntegerField(choices=ReportKind)
+    kind = models.IntegerField(choices=ReportKind.choices)
     details = models.CharField(max_length=1024)
     submitter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

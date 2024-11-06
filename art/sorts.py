@@ -5,4 +5,8 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
         "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
         "title": SortConfig([standard_sort("title")], None),
     },
+    "chapter": {
+        "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
+        "name": SortConfig([standard_sort("name")], None),
+    },
 }
