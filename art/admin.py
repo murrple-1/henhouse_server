@@ -11,6 +11,7 @@ class ChaptersInline(admin.TabularInline):
 @admin.register(Story)
 class StoryAdmin(admin.ModelAdmin):
     list_display = ["title", "creator"]
+    ordering = ["title"]
     search_fields = ["title", "creator__email"]
     inlines = [ChaptersInline]
 
