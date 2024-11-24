@@ -65,10 +65,12 @@ class Command(BaseCommand):
                     )
                 )
 
-        tags = Tag.objects.bulk_create(
+        Tag.objects.bulk_create(
             (Tag(name=tag_name) for tag_name in tag_names), ignore_conflicts=True
         )
-        tags_by_name: dict[str, Tag] = {t.name: t for t in tags}
+        tags_by_name: dict[str, Tag] = {
+            t.name: t for t in Tag.objects.filter(name__in=tag_names)
+        }
 
         Story.objects.bulk_create(stories, batch_size=1024)
         Chapter.objects.bulk_create(chapters, batch_size=1024)
