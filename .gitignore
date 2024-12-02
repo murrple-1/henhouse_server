@@ -166,3 +166,4 @@ pyrightconfig.json
 local_settings.py
 _static/
 docker-compose.override.yml
+_silk_profiles/

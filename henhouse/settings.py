@@ -283,6 +283,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = ["X-CSRFToken"]
 
 # django-silk
+SILKY_INTERCEPT_PERCENT = int(os.getenv("APP_SILK_INTERCEPT_PERCENT", "50"))
 SILKY_AUTHENTICATION = True
 SILKY_AUTHORISATION = True
 SILKY_MAX_RECORDED_REQUESTS = 10**4
@@ -298,6 +299,10 @@ SILKY_MAX_REQUEST_BODY_SIZE = int(
 SILKY_MAX_RESPONSE_BODY_SIZE = int(
     os.getenv("APP_SILKY_MAX_RESPONSE_BODY_SIZE", "8192")
 )  # 8kb
+
+
+# django-csp
+CSP_SCRIPT_SRC_ATTR = ("'self'", "'unsafe-inline'")
 
 # app
 _test_runner_type = os.getenv("TEST_RUNNER_TYPE", "standard").lower()

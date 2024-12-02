@@ -23,9 +23,9 @@ class Story(models.Model):
     ) -> models.QuerySet["Story"]:
         chapters = Chapter.objects.filter(story_id=models.OuterRef("uuid"))
         return qs.annotate(
-            published_at=chapters.annotate(
-                min_published_at=models.Min("published_at")
-            ).values("min_published_at")
+            published_at=chapters.values("story_id")
+            .annotate(min_published_at=models.Min("published_at"))
+            .values("min_published_at")
         )
 
     @staticmethod
@@ -33,10 +33,13 @@ class Story(models.Model):
         qs: models.QuerySet["Story"],
     ) -> models.QuerySet["Story"]:
         if connection.vendor == "postgresql":  # pragma: no cover
-            from django.contrib.postgres.search import SearchVector
+            from django.contrib.postgres.search import SearchVectorField
+            from django.db.models.expressions import RawSQL
 
             qs = qs.annotate(
-                title_search_vector=SearchVector("title"),
+                title_search_vector=RawSQL(
+                    "title_search_vector", [], output_field=SearchVectorField()
+                ),
             )
         return qs
 
@@ -62,10 +65,13 @@ class Chapter(models.Model):
         qs: models.QuerySet["Chapter"],
     ) -> models.QuerySet["Chapter"]:
         if connection.vendor == "postgresql":  # pragma: no cover
-            from django.contrib.postgres.search import SearchVector
+            from django.contrib.postgres.search import SearchVectorField
+            from django.db.models.expressions import RawSQL
 
             qs = qs.annotate(
-                markdown_search_vector=SearchVector("markdown"),
+                markdown_search_vector=RawSQL(
+                    "markdown_search_vector", [], output_field=SearchVectorField()
+                ),
             )
         return qs
 
