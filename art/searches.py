@@ -15,7 +15,7 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
     "chapter": {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
         "name": lambda request, search_obj: Q(name__icontains=search_obj),
-        "name_exact": lambda request, search_obj: Q(title__iexact=search_obj),
+        "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
     },
 }
 
