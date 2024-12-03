@@ -1,6 +1,5 @@
 import datetime
 import uuid
-from time import timezone
 from typing import ClassVar
 
 from django.test import TestCase
