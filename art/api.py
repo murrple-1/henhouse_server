@@ -73,9 +73,15 @@ def story_details(request: HttpRequest, story_id: uuid.UUID):
 def create_story(request: HttpRequest, input_story: StoryInSchema):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
+
+    tag_uuids = frozenset(input_story.tags)
+    tags = list(Tag.objects.filter(uuid__in=tag_uuids))
+    if len(tag_uuids) != len(tags):
+        raise Http404
+
     with transaction.atomic():
         story = Story.objects.create(creator=user, title=input_story.title)
-        story.tags.set(Tag.objects.filter(uuid__in=frozenset(input_story.tags)))
+        story.tags.set(tags)
 
         return story
 
@@ -96,23 +102,18 @@ def patch_story(
 
         update_fields: set[str] = set()
 
+        if input_story.tags is not None:
+            tag_uuids = frozenset(input_story.tags)
+            tags = list(Tag.objects.filter(uuid__in=tag_uuids))
+            if len(tag_uuids) != len(tags):
+                raise Http404
+            story.tags.set(tags)
+
         if input_story.title is not None:
             story.title = input_story.title
             update_fields.add("title")
 
-        if input_story.published is not None:
-            if input_story.published:
-                if story.published_at is None:
-                    story.published_at = timezone.now()
-            else:
-                story.published_at = None
-
-            update_fields.add("published_at")
-
         story.save(update_fields=update_fields)
-
-        if input_story.tags is not None:
-            story.tags.set(Tag.objects.filter(uuid__in=frozenset(input_story.tags)))
 
         return story
 

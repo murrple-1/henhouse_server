@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Optional, Self
 
 from django.db.models import OrderBy, Q
 from django.http import HttpRequest
 from ninja import ModelSchema, Schema
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 
 from art.models import Chapter, Story, Tag
 from art.searches import search_fns
@@ -16,6 +16,15 @@ class StoryInSchema(ModelSchema):
     class Meta:
         model = Story
         fields = ["title", "tags"]
+
+    @model_validator(mode="after")
+    def check_title(self) -> Self:
+        title = self.title
+        title = title.strip()
+        if len(title) < 1:
+            raise ValueError("title must be non-empty")
+        self.title = title
+        return self
 
 
 class StoryPatchInSchema(ModelSchema):
@@ -43,6 +52,24 @@ class ChapterInSchema(ModelSchema):
     class Meta:
         model = Chapter
         fields = ["name", "markdown"]
+
+    @model_validator(mode="after")
+    def check_name(self) -> Self:
+        name = self.name
+        name = name.strip()
+        if len(name) < 1:
+            raise ValueError("name must be non-empty")
+        self.name = name
+        return self
+
+    @model_validator(mode="after")
+    def check_markdown(self) -> Self:
+        markdown = self.markdown
+        markdown = markdown.strip()
+        if len(markdown) < 1:
+            raise ValueError("markdown must be non-empty")
+        self.markdown = markdown
+        return self
 
 
 class ChapterPatchInSchema(ModelSchema):
