@@ -317,6 +317,6 @@ else:
 TOKEN_EXPIRY_INTERVAL = datetime.timedelta(days=14)
 
 try:
-    from .local_settings import *
+    from .local_settings import *  # noqa: F403
 except ImportError:
     pass

@@ -10,7 +10,7 @@ class EmailBackend(ModelBackend):
         request: HttpRequest | None,
         username: str | None = None,
         password: str | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         try:
             user = UserModel.objects.get(email__iexact=username)

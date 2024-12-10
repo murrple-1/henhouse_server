@@ -2,15 +2,14 @@ import uuid
 from typing import Any, Callable, ClassVar, TypedDict
 from unittest.mock import Mock
 
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
 from django.http import HttpRequest
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
 from app_admin.models import User
 from art import searches
 from art.models import Chapter, Story
-from query_utils import search as searchutils
 
 
 class AllSearchesTestCase(TestCase):

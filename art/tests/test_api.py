@@ -178,7 +178,7 @@ class ApiTest(TestCase):
     async def test_create_story_notauthorized(self):
         test_client = TestAsyncClient(router)
 
-        user = await User.objects.acreate_user("user1", "test@test.com", None)
+        await User.objects.acreate_user("user1", "test@test.com", None)
 
         response = await test_client.post(
             "/story", json={"title": "Test Story", "tags": []}

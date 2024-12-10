@@ -19,8 +19,7 @@ python-dateutil = "*"
 
 [dev-packages]
 coverage = "*"
-black = "24.4.2"
-isort = "*"
+ruff = "0.8.2"
 django-stubs = { version = "*", extras = ["compatible-mypy"] }
 tblib = "*"
 watchdog = "*"

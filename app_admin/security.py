@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
 from django.core.signals import setting_changed
-from django.db.models import Q
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.utils import timezone
