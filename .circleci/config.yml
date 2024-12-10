@@ -72,9 +72,6 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "Pipfile.lock" }}
       - run:
-          name: Python test
-          command: python --version
-      - run:
           name: pipenv setup
           command: |
             pip install -U pip
@@ -104,9 +101,6 @@ jobs:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "Pipfile.lock" }}
-      - run:
-          name: Python test
-          command: python --version
       - run:
           name: pipenv setup
           command: |
