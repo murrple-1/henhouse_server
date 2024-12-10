@@ -14,7 +14,7 @@ class HasLowercaseValidatorTestCase(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.user = User.objects.create_user("test@test.com", None)
+        cls.user = User.objects.create_user("user1", "test@test.com", None)
 
     def test_validate(self):
         validator = password_validation.HasLowercaseValidator()
@@ -35,7 +35,7 @@ class HasUppercaseValidatorTestCase(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.user = User.objects.create_user("test@test.com", None)
+        cls.user = User.objects.create_user("user1", "test@test.com", None)
 
     def test_validate(self):
         validator = password_validation.HasUppercaseValidator()
@@ -56,7 +56,7 @@ class HasDigitValidatorTestCase(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.user = User.objects.create_user("test@test.com", None)
+        cls.user = User.objects.create_user("user1", "test@test.com", None)
 
     def test_validate(self):
         validator = password_validation.HasDigitValidator()
@@ -77,7 +77,7 @@ class HasSpecialCharacterValidatorTestCase(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.user = User.objects.create_user("test@test.com", None)
+        cls.user = User.objects.create_user("user1", "test@test.com", None)
 
     def test_validate(self):
         validator = password_validation.HasSpecialCharacterValidator()

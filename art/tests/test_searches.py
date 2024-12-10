@@ -52,7 +52,7 @@ class AllSearchesTestCase(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.user = User.objects.create_user("test_searches@test.com", None)
+        cls.user = User.objects.create_user("user1", "test_searches@test.com", None)
 
     def test_run(self):
         self.assertEqual(len(AllSearchesTestCase.TRIALS), len(searches.search_fns))

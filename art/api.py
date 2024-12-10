@@ -1,11 +1,12 @@
 import uuid
+from typing import Iterable
 
+from asgiref.sync import sync_to_async
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 from django.db.models import Max, Q, QuerySet, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest
-from django.utils import timezone
 from ninja import Query
 from ninja.pagination import RouterPaginated
 
@@ -28,7 +29,7 @@ router = RouterPaginated()
 
 
 @router.get("/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"])
-def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
+async def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
     user = request.user
     filter_args: list[Q]
     if user.is_authenticated:
@@ -51,7 +52,7 @@ def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
     auth=auth_optional,
     tags=["story"],
 )
-def story_details(request: HttpRequest, story_id: uuid.UUID):
+async def story_details(request: HttpRequest, story_id: uuid.UUID):
     user = request.user
     filter_args: list[Q]
     if user.is_authenticated:
@@ -60,25 +61,33 @@ def story_details(request: HttpRequest, story_id: uuid.UUID):
         filter_args = [Q(published_at__isnull=False)]
 
     try:
-        return (
+        return await (
             Story.annotate_from_chapters(Story.objects.all())
+            .prefetch_related("tags")
             .filter(*filter_args)
-            .get(uuid=story_id)
+            .aget(uuid=story_id)
         )
     except Story.DoesNotExist:
         raise Http404
 
 
 @router.post("/story", response=StoryOutSchema, auth=must_auth, tags=["story"])
-def create_story(request: HttpRequest, input_story: StoryInSchema):
+async def create_story(request: HttpRequest, input_story: StoryInSchema):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
 
     tag_uuids = frozenset(input_story.tags)
-    tags = list(Tag.objects.filter(uuid__in=tag_uuids))
+    tags: list[Tag] = [t async for t in Tag.objects.filter(uuid__in=tag_uuids)]
     if len(tag_uuids) != len(tags):
         raise Http404
 
+    return await _create_story_transaction(user, input_story, tags)
+
+
+@sync_to_async
+def _create_story_transaction(
+    user: AbstractBaseUser, input_story: StoryInSchema, tags: list[Tag]
+) -> Story:
     with transaction.atomic():
         story = Story.objects.create(creator=user, title=input_story.title)
         story.tags.set(tags)
@@ -89,42 +98,53 @@ def create_story(request: HttpRequest, input_story: StoryInSchema):
 @router.patch(
     "/story/{story_id}", response=StoryOutSchema, auth=must_auth, tags=["story"]
 )
-def patch_story(
+async def patch_story(
     request: HttpRequest, story_id: uuid.UUID, input_story: StoryPatchInSchema
 ):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
-    with transaction.atomic():
-        try:
-            story = Story.objects.get(creator=user, uuid=story_id)
-        except Story.DoesNotExist:
+
+    try:
+        story = await Story.objects.aget(creator=user, uuid=story_id)
+    except Story.DoesNotExist:
+        raise Http404
+
+    update_fields: set[str] = set()
+
+    if input_story.title is not None:
+        story.title = input_story.title
+        update_fields.add("title")
+
+    tags: Iterable[Tag] | None = None
+    if input_story.tags is not None:
+        tag_uuids = frozenset(input_story.tags)
+        tags = [t async for t in Tag.objects.filter(uuid__in=tag_uuids)]
+        if len(tag_uuids) != len(tags):
             raise Http404
 
-        update_fields: set[str] = set()
+    await _patch_story_transaction(story, update_fields, tags)
 
-        if input_story.tags is not None:
-            tag_uuids = frozenset(input_story.tags)
-            tags = list(Tag.objects.filter(uuid__in=tag_uuids))
-            if len(tag_uuids) != len(tags):
-                raise Http404
-            story.tags.set(tags)
+    return story
 
-        if input_story.title is not None:
-            story.title = input_story.title
-            update_fields.add("title")
 
+@sync_to_async
+def _patch_story_transaction(
+    story: Story, update_fields: set[str], tags: Iterable[Tag] | None
+) -> None:
+    with transaction.atomic():
         story.save(update_fields=update_fields)
 
-        return story
+        if tags is not None:
+            story.tags.set(tags)
 
 
 @router.delete(
     "/story/{story_id}", response={204: None}, auth=must_auth, tags=["story"]
 )
-def delete_story(request: HttpRequest, story_id: uuid.UUID):
+async def delete_story(request: HttpRequest, story_id: uuid.UUID):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
-    count, _ = Story.objects.filter(creator=user, uuid=story_id).delete()
+    count, _ = await Story.objects.filter(creator=user, uuid=story_id).adelete()
     if not count:
         raise Http404
 
@@ -137,7 +157,7 @@ def delete_story(request: HttpRequest, story_id: uuid.UUID):
     auth=auth_optional,
     tags=["chapter"],
 )
-def list_chapters(request: HttpRequest, story_id: uuid.UUID):
+async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
     user = request.user
     filter_args: list[Q]
     if user.is_authenticated:
@@ -147,18 +167,21 @@ def list_chapters(request: HttpRequest, story_id: uuid.UUID):
 
     story: Story
     try:
-        story = (
+        story = await (
             Story.annotate_from_chapters(Story.objects.all())
             .filter(*filter_args)
-            .get(uuid=story_id)
+            .aget(uuid=story_id)
         )
     except Story.DoesNotExist:
         raise Http404
 
+    chapter_qs: QuerySet[Chapter]
     if user.is_authenticated and story.creator_id == user.pk:
-        return story.chapters.all()
+        chapter_qs = story.chapters.all()
     else:
-        return story.chapters.filter(published_at__isnull=False)
+        chapter_qs = story.chapters.filter(published_at__isnull=False)
+
+    return chapter_qs
 
 
 @router.get(
@@ -167,7 +190,7 @@ def list_chapters(request: HttpRequest, story_id: uuid.UUID):
     auth=auth_optional,
     tags=["chapter"],
 )
-def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
+async def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
     user = request.user
 
     accessible_chapters: QuerySet[Chapter]
@@ -179,7 +202,7 @@ def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
         accessible_chapters = Chapter.objects.filter(published_at__isnull=False)
 
     try:
-        return accessible_chapters.get(uuid=chapter_id)
+        return await accessible_chapters.aget(uuid=chapter_id)
     except Chapter.DoesNotExist:
         raise Http404
 
@@ -190,68 +213,71 @@ def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
     auth=must_auth,
     tags=["chapter"],
 )
-def create_chapter(
+async def create_chapter(
     request: HttpRequest, story_id: uuid.UUID, input_chapter: ChapterInSchema
 ):
     user = request.user
-    assert isinstance(user, AbstractBaseUser)
-    with transaction.atomic():
-        try:
-            story = Story.objects.get(creator=user, uuid=story_id)
-        except Story.DoesNotExist:
-            raise Http404
 
-        index = Chapter.objects.filter(story=story).aggregate(
-            max_index=Coalesce(Max("index"), Value(0))
-        )["max_index"]
+    try:
+        story = await Story.objects.aget(creator=user, uuid=story_id)
+    except Story.DoesNotExist:
+        raise Http404
 
-        chapter = Chapter.objects.create(
-            story=story,
-            name=input_chapter.name,
-            markdown=input_chapter.markdown,
-            index=(index + 1),
+    index = (
+        await Chapter.objects.filter(story=story).aaggregate(
+            max_index=Coalesce(Max("index"), Value(-1))
         )
+    )["max_index"]
 
-        return chapter
+    chapter = await Chapter.objects.acreate(
+        story=story,
+        name=input_chapter.name,
+        markdown=input_chapter.markdown,
+        index=(index + 1),
+    )
+
+    return chapter
 
 
 @router.patch(
     "/chapter/{chapter_id}", response=ChapterOutSchema, auth=must_auth, tags=["chapter"]
 )
-def patch_chapter(
+async def patch_chapter(
     request: HttpRequest, chapter_id: uuid.UUID, input_chapter: ChapterPatchInSchema
 ):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
-    with transaction.atomic():
-        try:
-            chapter = Chapter.objects.get(story__creator=user, uuid=chapter_id)
-        except Chapter.DoesNotExist:
-            raise Http404
 
-        update_fields: set[str] = set()
+    try:
+        chapter = await Chapter.objects.aget(story__creator=user, uuid=chapter_id)
+    except Chapter.DoesNotExist:
+        raise Http404
 
-        if input_chapter.name is not None:
-            chapter.name = input_chapter.name
-            update_fields.add("name")
+    update_fields: set[str] = set()
 
-        if input_chapter.markdown is not None:
-            chapter.markdown = input_chapter.markdown
+    if input_chapter.name is not None:
+        chapter.name = input_chapter.name
+        update_fields.add("name")
 
-            update_fields.add("markdown")
+    if input_chapter.markdown is not None:
+        chapter.markdown = input_chapter.markdown
 
-        chapter.save(update_fields=update_fields)
+        update_fields.add("markdown")
 
-        return chapter
+    await chapter.asave(update_fields=update_fields)
+
+    return chapter
 
 
 @router.delete(
     "/chapter/{chapter_id}", response={204: None}, auth=must_auth, tags=["chapter"]
 )
-def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
+async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
-    count, _ = Chapter.objects.filter(story__creator=user, uuid=chapter_id).delete()
+    count, _ = await Chapter.objects.filter(
+        story__creator=user, uuid=chapter_id
+    ).adelete()
     if not count:
         raise Http404
 
@@ -259,5 +285,5 @@ def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
 
 
 @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-def list_tags(request: HttpRequest):
+async def list_tags(request: HttpRequest):
     return Tag.objects.all()

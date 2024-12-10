@@ -12,16 +12,22 @@ from django.utils import timezone
 
 
 class UserManager(BaseUserManager["User"]):
-    def create_user(self, email, password, **extra_fields):
+    def create_user(
+        self, username: str, email: str, password: str, **extra_fields: Any
+    ):
+        if not username:
+            raise ValueError("The Username must be set")
         if not email:
             raise ValueError("The Email must be set")
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(
+        self, username: str, email: str, password: str, **extra_fields: Any
+    ):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -31,13 +37,40 @@ class UserManager(BaseUserManager["User"]):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
 
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(username, email, password, **extra_fields)
+
+    async def acreate_user(
+        self, username: str, email: str, password: str, **extra_fields: Any
+    ):
+        if not username:
+            raise ValueError("The Username must be set")
+        if not email:
+            raise ValueError("The Email must be set")
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        await user.asave()
+        return user
+
+    async def acreate_superuser(
+        self, username: str, email: str, password: str, **extra_fields: Any
+    ):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return await self.acreate_user(username, email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=64, unique=True)
+    email = models.EmailField(unique=True, blank=False)
+    username = models.CharField(max_length=64, unique=True, blank=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)

@@ -11,7 +11,7 @@ from app_admin.security import HttpBasicAuth, HttpBearer, TokenExpired, TokenInv
 
 class HttpBasicAuthTestCase(TestCase):
     def test_authenticate(self):
-        user = User.objects.create_user("test@test.com", "P4ssw0rd!")
+        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
 
         auth = HttpBasicAuth()
         self.assertIsNone(
@@ -28,7 +28,7 @@ class HttpBasicAuthTestCase(TestCase):
 
 class HttpBearerAuthTestCase(TestCase):
     def test_authenticate(self):
-        user = User.objects.create_user("test@test.com", "P4ssw0rd!")
+        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
         token = Token.objects.create(user=user)
 
         auth = HttpBearer()
@@ -43,7 +43,7 @@ class HttpBearerAuthTestCase(TestCase):
         self.assertLessEqual(abs((timezone.now() - last_login).total_seconds()), 5.0)
 
     def test_authenticate_with_expiry(self):
-        user = User.objects.create_user("test@test.com", "P4ssw0rd!")
+        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
         token = Token.objects.create(
             user=user, expires_at=(timezone.now() + datetime.timedelta(minutes=5))
         )
