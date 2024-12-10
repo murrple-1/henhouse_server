@@ -3,7 +3,7 @@ from typing import Optional, Self
 from django.db.models import OrderBy, Q
 from django.http import HttpRequest
 from ninja import ModelSchema, Schema
-from pydantic import ConfigDict, model_validator
+from pydantic import model_validator
 
 from art.models import Chapter, Story, Tag
 from art.searches import search_fns
@@ -106,8 +106,6 @@ class TagOutSchema(ModelSchema):
 
 
 class ListSchema(Schema):
-    model_config = ConfigDict(arbitrary_types_allowed=True, validate_default=True)
-
     search: str | None = None
     sort: str | None = None
     default_sort_enabled: bool = True

@@ -10,15 +10,9 @@ from ninja.testing.client import NinjaResponse
 from app_admin.models import User
 from art.api import router
 from art.models import Chapter, Story, Tag
-from art.schemas import (
-    ChapterInSchema,
-    ChapterPatchInSchema,
-    StoryInSchema,
-    StoryPatchInSchema,
-)
 
 
-class ApiTest(TestCase):
+class ApiTestCase(TestCase):
     @unittest.skip(
         "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
     )
@@ -121,8 +115,14 @@ class ApiTest(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        input_data = StoryInSchema(title="Test Story 1", tags=[])
-        response = await test_client.post("/story", json=input_data.dict(), user=user)
+        response = await test_client.post(
+            "/story",
+            json={
+                "title": "Test Story 1",
+                "tags": [],
+            },
+            user=user,
+        )
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
         self.assertIsInstance(json_, dict)
@@ -139,8 +139,14 @@ class ApiTest(TestCase):
         )
 
         tag = await Tag.objects.acreate(name="test")
-        input_data = StoryInSchema(title="Test Story 2", tags=[str(tag.uuid)])
-        response = await test_client.post("/story", json=input_data.dict(), user=user)
+        response = await test_client.post(
+            "/story",
+            json={
+                "title": "Test Story 2",
+                "tags": [str(tag.uuid)],
+            },
+            user=user,
+        )
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
         self.assertIsInstance(json_, dict)
@@ -161,8 +167,14 @@ class ApiTest(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        input_data = StoryInSchema(title="Test Story", tags=[str(uuid.UUID(int=0))])
-        response = await test_client.post("/story", json=input_data.dict(), user=user)
+        response = await test_client.post(
+            "/story",
+            json={
+                "title": "Test Story",
+                "tags": [str(uuid.UUID(int=0))],
+            },
+            user=user,
+        )
         self.assertEqual(response.status_code, 404, response.content)
 
     async def test_create_story_invalidtitle(self):
@@ -192,10 +204,7 @@ class ApiTest(TestCase):
 
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
-        input_data = StoryPatchInSchema()
-        response = await test_client.patch(
-            f"/story/{story.uuid}", json=input_data.dict(), user=user
-        )
+        response = await test_client.patch(f"/story/{story.uuid}", json={}, user=user)
         self.assertEqual(response.status_code, 200, response.content)
 
         self.assertEqual(
@@ -208,9 +217,8 @@ class ApiTest(TestCase):
         await story.arefresh_from_db(fields=("title",))
         self.assertEqual(story.title, "Test Story")
 
-        input_data = StoryPatchInSchema(title="New Story Title")
         response = await test_client.patch(
-            f"/story/{story.uuid}", json=input_data.dict(), user=user
+            f"/story/{story.uuid}", json={"title": "New Story Title"}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
@@ -225,9 +233,8 @@ class ApiTest(TestCase):
         self.assertEqual(await story.tags.acount(), 0)
 
         tag = await Tag.objects.acreate(name="test")
-        input_data = StoryPatchInSchema(tags=[str(tag.uuid)])
         response = await test_client.patch(
-            f"/story/{story.uuid}", json=input_data.dict(), user=user
+            f"/story/{story.uuid}", json={"tags": [str(tag.uuid)]}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -247,9 +254,8 @@ class ApiTest(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        input_data = StoryPatchInSchema()
         response = await test_client.patch(
-            f"/story/{uuid.UUID(int=0)}", json=input_data.dict(), user=user
+            f"/story/{uuid.UUID(int=0)}", json={}, user=user
         )
         self.assertEqual(response.status_code, 404, response.content)
 
@@ -260,9 +266,8 @@ class ApiTest(TestCase):
 
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
-        input_data = StoryPatchInSchema(tags=[str(uuid.UUID(int=0))])
         response = await test_client.patch(
-            f"/story/{story.uuid}", json=input_data.dict(), user=user
+            f"/story/{story.uuid}", json={"tags": [str(uuid.UUID(int=0))]}, user=user
         )
         self.assertEqual(response.status_code, 404, response.content)
 
@@ -273,10 +278,7 @@ class ApiTest(TestCase):
 
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
-        input_data = StoryPatchInSchema()
-        response = await test_client.patch(
-            f"/story/{story.uuid}", json=input_data.dict()
-        )
+        response = await test_client.patch(f"/story/{story.uuid}", json={})
         self.assertEqual(response.status_code, 401, response.content)
 
     async def test_delete_story(self):
@@ -486,9 +488,10 @@ class ApiTest(TestCase):
 
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
-        input_data = ChapterInSchema(name="Chapter 1", markdown="Chapter Text")
         response = await test_client.post(
-            f"/story/{story.uuid}/chapter", json=input_data.dict(), user=user
+            f"/story/{story.uuid}/chapter",
+            json={"name": "Chapter 1", "markdown": "Chapter Text"},
+            user=user,
         )
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -507,6 +510,27 @@ class ApiTest(TestCase):
             },
         )
 
+    async def test_create_chapter_invalid(self):
+        test_client = TestAsyncClient(router)
+
+        user = await User.objects.acreate_user("user1", "test@test.com", None)
+
+        story = await Story.objects.acreate(title="Test Story", creator=user)
+
+        response = await test_client.post(
+            f"/story/{story.uuid}/chapter",
+            json={"name": "", "markdown": "Chapter Text"},
+            user=user,
+        )
+        self.assertEqual(response.status_code, 422, response.content)
+
+        response = await test_client.post(
+            f"/story/{story.uuid}/chapter",
+            json={"name": "Chapter 1", "markdown": ""},
+            user=user,
+        )
+        self.assertEqual(response.status_code, 422, response.content)
+
     async def test_create_chapter_notfound(self):
         test_client = TestAsyncClient(router)
 
@@ -515,15 +539,14 @@ class ApiTest(TestCase):
 
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
-        input_data = ChapterInSchema(name="Chapter 1", markdown="Chapter Text")
-
+        input_json = {"name": "Chapter 1", "markdown": "Chapter Text"}
         response = await test_client.post(
-            f"/story/{story.uuid}/chapter", json=input_data.dict(), user=alt_user
+            f"/story/{story.uuid}/chapter", json=input_json, user=alt_user
         )
         self.assertEqual(response.status_code, 404, response.content)
 
         response = await test_client.post(
-            f"/story/{uuid.UUID(int=0)}/chapter", json=input_data.dict(), user=alt_user
+            f"/story/{uuid.UUID(int=0)}/chapter", json=input_json, user=alt_user
         )
         self.assertEqual(response.status_code, 404, response.content)
 
@@ -542,9 +565,8 @@ class ApiTest(TestCase):
             published_at=None,
         )
 
-        input_data = ChapterPatchInSchema()
         response = await test_client.patch(
-            f"/chapter/{chapter.uuid}", json=input_data.dict(), user=user
+            f"/chapter/{chapter.uuid}", json={}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
@@ -559,9 +581,8 @@ class ApiTest(TestCase):
         self.assertEqual(chapter.name, "Chapter 1")
         self.assertEqual(chapter.markdown, "Chapter Text")
 
-        input_data = ChapterPatchInSchema(name="Introduction")
         response = await test_client.patch(
-            f"/chapter/{chapter.uuid}", json=input_data.dict(), user=user
+            f"/chapter/{chapter.uuid}", json={"name": "Introduction"}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
@@ -576,9 +597,10 @@ class ApiTest(TestCase):
         self.assertEqual(chapter.name, "Introduction")
         self.assertEqual(chapter.markdown, "Chapter Text")
 
-        input_data = ChapterPatchInSchema(markdown="Introduction Text")
         response = await test_client.patch(
-            f"/chapter/{chapter.uuid}", json=input_data.dict(), user=user
+            f"/chapter/{chapter.uuid}",
+            json={"markdown": "Introduction Text"},
+            user=user,
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
@@ -609,13 +631,13 @@ class ApiTest(TestCase):
             published_at=None,
         )
 
-        input_data = ChapterPatchInSchema()
+        input_json = {}
         response = await test_client.patch(
-            f"/chapter/{chapter.uuid}", json=input_data.dict(), user=alt_user
+            f"/chapter/{chapter.uuid}", json=input_json, user=alt_user
         )
         self.assertEqual(response.status_code, 404, response.content)
         response = await test_client.patch(
-            f"/chapter/{uuid.UUID(int=0)}", json=input_data.dict(), user=user
+            f"/chapter/{uuid.UUID(int=0)}", json=input_json, user=user
         )
         self.assertEqual(response.status_code, 404, response.content)
 

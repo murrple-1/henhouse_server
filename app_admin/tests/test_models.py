@@ -11,9 +11,18 @@ class UserTestCase(TestCase):
         with self.assertRaises(ValueError):
             User.objects.create_user("user1", "", "password")
 
-    def test_create_superuser(self):
-        User.objects.create_superuser("user1", "test@test.com", "password")
+        User.objects.create_user("user1", "test@test.com", "password")
 
+    async def test_acreate_user(self):
+        with self.assertRaises(ValueError):
+            await User.objects.acreate_user("", "test@test.com", "password")
+
+        with self.assertRaises(ValueError):
+            await User.objects.acreate_user("user1", "", "password")
+
+        await User.objects.acreate_user("user1", "test@test.com", "password")
+
+    def test_create_superuser(self):
         with self.assertRaises(ValueError):
             User.objects.create_superuser(
                 "user1", "test1@test.com", "password", is_staff=False
@@ -23,6 +32,21 @@ class UserTestCase(TestCase):
             User.objects.create_superuser(
                 "user1", "test2@test.com", "password", is_superuser=False
             )
+
+        User.objects.create_superuser("user1", "test@test.com", "password")
+
+    async def test_acreate_superuser(self):
+        with self.assertRaises(ValueError):
+            await User.objects.acreate_superuser(
+                "user1", "test1@test.com", "password", is_staff=False
+            )
+
+        with self.assertRaises(ValueError):
+            await User.objects.acreate_superuser(
+                "user1", "test2@test.com", "password", is_superuser=False
+            )
+
+        await User.objects.acreate_superuser("user1", "test@test.com", "password")
 
 
 class TokenTestCase(TestCase):
