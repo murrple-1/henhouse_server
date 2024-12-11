@@ -27,23 +27,50 @@ from art.schemas import (
 
 router = RouterPaginated()
 
+# TODO can be made True when https://github.com/vitalik/django-ninja/pull/1340 is resolved
+_async_pagination_works = False
 
-@router.get("/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"])
-async def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
-    user = request.user
-    filter_args: list[Q]
-    if user.is_authenticated:
-        filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
-    else:
-        filter_args = [Q(published_at__isnull=False)]
+if _async_pagination_works:
 
-    filter_args += list_params.get_filter_args("story", request)
-
-    return (
-        Story.annotate_from_chapters(Story.objects.all())
-        .filter(*filter_args)
-        .order_by(*list_params.get_order_by_args("story"))
+    @router.get(
+        "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
     )
+    async def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
+        user = request.user
+        filter_args: list[Q]
+        if user.is_authenticated:
+            filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+        else:
+            filter_args = [Q(published_at__isnull=False)]
+
+        filter_args += list_params.get_filter_args("story", request)
+
+        return (
+            Story.annotate_from_chapters(Story.objects.all())
+            .filter(*filter_args)
+            .order_by(*list_params.get_order_by_args("story"))
+        )
+
+else:
+
+    @router.get(
+        "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
+    )
+    def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
+        user = request.user
+        filter_args: list[Q]
+        if user.is_authenticated:
+            filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+        else:
+            filter_args = [Q(published_at__isnull=False)]
+
+        filter_args += list_params.get_filter_args("story", request)
+
+        return (
+            Story.annotate_from_chapters(Story.objects.all())
+            .filter(*filter_args)
+            .order_by(*list_params.get_order_by_args("story"))
+        )
 
 
 @router.get(
@@ -151,37 +178,73 @@ async def delete_story(request: HttpRequest, story_id: uuid.UUID):
     return None
 
 
-@router.get(
-    "/story/{story_id}/chapter",
-    response=list[ChapterOutSchema],
-    auth=auth_optional,
-    tags=["chapter"],
-)
-async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
-    user = request.user
-    filter_args: list[Q]
-    if user.is_authenticated:
-        filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
-    else:
-        filter_args = [Q(published_at__isnull=False)]
+if _async_pagination_works:
 
-    story: Story
-    try:
-        story = await (
-            Story.annotate_from_chapters(Story.objects.all())
-            .filter(*filter_args)
-            .aget(uuid=story_id)
-        )
-    except Story.DoesNotExist:
-        raise Http404
+    @router.get(
+        "/story/{story_id}/chapter",
+        response=list[ChapterOutSchema],
+        auth=auth_optional,
+        tags=["chapter"],
+    )
+    async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
+        user = request.user
+        filter_args: list[Q]
+        if user.is_authenticated:
+            filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+        else:
+            filter_args = [Q(published_at__isnull=False)]
 
-    chapter_qs: QuerySet[Chapter]
-    if user.is_authenticated and story.creator_id == user.pk:
-        chapter_qs = story.chapters.all()
-    else:
-        chapter_qs = story.chapters.filter(published_at__isnull=False)
+        story: Story
+        try:
+            story = await (
+                Story.annotate_from_chapters(Story.objects.all())
+                .filter(*filter_args)
+                .aget(uuid=story_id)
+            )
+        except Story.DoesNotExist:
+            raise Http404
 
-    return chapter_qs
+        chapter_qs: QuerySet[Chapter]
+        if user.is_authenticated and story.creator_id == user.pk:
+            chapter_qs = story.chapters.all()
+        else:
+            chapter_qs = story.chapters.filter(published_at__isnull=False)
+
+        return chapter_qs
+
+else:
+
+    @router.get(
+        "/story/{story_id}/chapter",
+        response=list[ChapterOutSchema],
+        auth=auth_optional,
+        tags=["chapter"],
+    )
+    def list_chapters(request: HttpRequest, story_id: uuid.UUID):
+        user = request.user
+        filter_args: list[Q]
+        if user.is_authenticated:
+            filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
+        else:
+            filter_args = [Q(published_at__isnull=False)]
+
+        story: Story
+        try:
+            story = (
+                Story.annotate_from_chapters(Story.objects.all())
+                .filter(*filter_args)
+                .get(uuid=story_id)
+            )
+        except Story.DoesNotExist:
+            raise Http404
+
+        chapter_qs: QuerySet[Chapter]
+        if user.is_authenticated and story.creator_id == user.pk:
+            chapter_qs = story.chapters.all()
+        else:
+            chapter_qs = story.chapters.filter(published_at__isnull=False)
+
+        return chapter_qs
 
 
 @router.get(
@@ -284,6 +347,14 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
     return None
 
 
-@router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-async def list_tags(request: HttpRequest):
-    return Tag.objects.all()
+if _async_pagination_works:
+
+    @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
+    async def list_tags(request: HttpRequest):
+        return Tag.objects.all()
+
+else:
+
+    @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
+    def list_tags(request: HttpRequest):
+        return Tag.objects.all()

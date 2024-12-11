@@ -396,6 +396,9 @@ class ApiTestCase(TestCase):
 
         assert_single_entry_response(response)
 
+    @unittest.skip(
+        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
+    )
     async def test_list_chapters_notfound(self):
         test_client = TestAsyncClient(router)
 
