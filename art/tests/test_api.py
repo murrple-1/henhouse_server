@@ -69,10 +69,10 @@ class ApiTestCase(TestCase):
         json_ = response.json()
         self.assertIsInstance(json_, dict)
         assert isinstance(json_, dict)
-        self.assertIn("created_at", json_)
-        self.assertIsInstance(json_["created_at"], str)
-        datetime.datetime.fromisoformat(json_["created_at"])
-        json_.pop("created_at")
+        self.assertIn("createdAt", json_)
+        self.assertIsInstance(json_["createdAt"], str)
+        datetime.datetime.fromisoformat(json_["createdAt"])
+        json_.pop("createdAt")
         self.assertEqual(
             json_,
             {
@@ -96,10 +96,10 @@ class ApiTestCase(TestCase):
         json_ = response.json()
         self.assertIsInstance(json_, dict)
         assert isinstance(json_, dict)
-        self.assertIn("created_at", json_)
-        self.assertIsInstance(json_["created_at"], str)
-        datetime.datetime.fromisoformat(json_["created_at"])
-        json_.pop("created_at")
+        self.assertIn("createdAt", json_)
+        self.assertIsInstance(json_["createdAt"], str)
+        datetime.datetime.fromisoformat(json_["createdAt"])
+        json_.pop("createdAt")
         self.assertEqual(
             json_,
             {
@@ -138,7 +138,7 @@ class ApiTestCase(TestCase):
             },
         )
 
-        tag = await Tag.objects.acreate(name="test")
+        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
         response = await test_client.post(
             "/story",
             json={
@@ -232,7 +232,7 @@ class ApiTestCase(TestCase):
         self.assertEqual(story.title, "New Story Title")
         self.assertEqual(await story.tags.acount(), 0)
 
-        tag = await Tag.objects.acreate(name="test")
+        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
         response = await test_client.patch(
             f"/story/{story.uuid}", json={"tags": [str(tag.uuid)]}, user=user
         )
@@ -432,18 +432,18 @@ class ApiTestCase(TestCase):
             json_ = response.json()
             self.assertIsInstance(json_, dict)
             assert isinstance(json_, dict)
-            self.assertIn("created_at", json_)
-            self.assertIsInstance(json_["created_at"], str)
-            datetime.datetime.fromisoformat(json_["created_at"])
-            json_.pop("created_at")
-            self.assertIn("published_at", json_)
-            if (pa := json_["published_at"]) is None:
+            self.assertIn("createdAt", json_)
+            self.assertIsInstance(json_["createdAt"], str)
+            datetime.datetime.fromisoformat(json_["createdAt"])
+            json_.pop("createdAt")
+            self.assertIn("publishedAt", json_)
+            if (pa := json_["publishedAt"]) is None:
                 pass
             elif isinstance(pa, str):
                 datetime.datetime.fromisoformat(pa)
             else:
-                raise AssertionError("published_at is not null nor string")
-            json_.pop("published_at")
+                raise AssertionError("publishedAt is not null nor string")
+            json_.pop("publishedAt")
             self.assertEqual(
                 json_,
                 {
@@ -696,8 +696,31 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"count": 0, "items": []})
 
-        await Tag.objects.acreate(name="test")
+        await Tag.objects.acreate(pretty_name="Test", name="test")
 
         response = await test_client.get("/tag")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"count": 1, "items": []})
+
+    async def test_tag_details(self):
+        test_client = TestAsyncClient(router)
+
+        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
+
+        response = await test_client.get(f"/tag/{tag.uuid}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(
+            response.json(),
+            {
+                "uuid": str(tag.uuid),
+                "prettyName": tag.pretty_name,
+                "name": tag.name,
+                "description": tag.description,
+            },
+        )
+
+    async def test_tag_details_notfound(self):
+        test_client = TestAsyncClient(router)
+
+        response = await test_client.get(f"/tag/{uuid.UUID(int=0)}")
+        self.assertEqual(response.status_code, 404, response.content)

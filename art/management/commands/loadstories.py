@@ -29,13 +29,13 @@ class Command(BaseCommand):
 
         stories_json: list[dict[str, Any]] = json.load(sys.stdin)
 
-        tag_names: set[str] = set()
+        tag_pretty_names: set[str] = set()
 
         stories: list[Story] = []
         chapters: list[Chapter] = []
         for story_json in stories_json:
-            story_tag_names = frozenset(story_json["tags"])
-            tag_names.update(story_tag_names)
+            story_tag_pretty_names = frozenset(story_json["tags"])
+            tag_pretty_names.update(story_tag_pretty_names)
 
             creator: User | None
             if (creator_username := story_json.get("creator")) is not None:
@@ -51,7 +51,11 @@ class Command(BaseCommand):
                 creator = default_creator
 
             story = Story(title=story_json["title"], creator=creator)
-            setattr(story, "_tag_names", story_tag_names)
+            setattr(
+                story,
+                "_tag_names",
+                frozenset(_tag_pretty_name_to_name(t) for t in story_tag_pretty_names),
+            )
             stories.append(story)
 
             for i, chapter_json in enumerate(story_json["chapters"]):
@@ -66,10 +70,19 @@ class Command(BaseCommand):
                 )
 
         Tag.objects.bulk_create(
-            (Tag(name=tag_name) for tag_name in tag_names), ignore_conflicts=True
+            (
+                Tag(pretty_name=tag_pretty_name, name=tag_pretty_name.lower())
+                for tag_pretty_name in tag_pretty_names
+            ),
+            ignore_conflicts=True,
         )
         tags_by_name: dict[str, Tag] = {
-            t.name: t for t in Tag.objects.filter(name__in=tag_names)
+            t.name: t
+            for t in Tag.objects.filter(
+                name__in=frozenset(
+                    _tag_pretty_name_to_name(t) for t in tag_pretty_names
+                )
+            )
         }
 
         Story.objects.bulk_create(stories, batch_size=1024)
@@ -79,3 +92,7 @@ class Command(BaseCommand):
             story.tags.set(
                 tags_by_name[tag_name] for tag_name in getattr(story, "_tag_names")
             )
+
+
+def _tag_pretty_name_to_name(pretty_name: str) -> str:
+    return pretty_name.lower().replace(" ", "_").replace("/", "-")

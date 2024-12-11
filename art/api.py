@@ -22,6 +22,7 @@ from art.schemas import (
     StoryOutDetailsSchema,
     StoryOutSchema,
     StoryPatchInSchema,
+    TagOutDetailsSchema,
     TagOutSchema,
 )
 
@@ -51,7 +52,7 @@ if _async_pagination_works:
             .order_by(*list_params.get_order_by_args("story"))
         )
 
-else:
+else:  # pragma: no cover
 
     @router.get(
         "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
@@ -212,7 +213,7 @@ if _async_pagination_works:
 
         return chapter_qs
 
-else:
+else:  # pragma: no cover
 
     @router.get(
         "/story/{story_id}/chapter",
@@ -350,11 +351,30 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
 if _async_pagination_works:
 
     @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-    async def list_tags(request: HttpRequest):
-        return Tag.objects.all()
+    async def list_tags(request: HttpRequest, list_params: Query[ListSchema]):
+        filter_args: list[Q] = list_params.get_filter_args("tag", request)
+        return Tag.objects.filter(*filter_args).order_by(
+            *list_params.get_order_by_args("tag")
+        )
 
-else:
+else:  # pragma: no cover
 
     @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-    def list_tags(request: HttpRequest):
-        return Tag.objects.all()
+    def list_tags(request: HttpRequest, list_params: Query[ListSchema]):
+        filter_args: list[Q] = list_params.get_filter_args("tag", request)
+        return Tag.objects.filter(*filter_args).order_by(
+            *list_params.get_order_by_args("tag")
+        )
+
+
+@router.get(
+    "/tag/{tag_id}",
+    response=TagOutDetailsSchema,
+    auth=auth_optional,
+    tags=["tag"],
+)
+async def tag_details(request: HttpRequest, tag_id: uuid.UUID):
+    try:
+        return await Tag.objects.aget(uuid=tag_id)
+    except Tag.DoesNotExist:
+        raise Http404

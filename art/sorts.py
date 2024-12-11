@@ -9,4 +9,9 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
         "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
         "name": SortConfig([standard_sort("name")], None),
     },
+    "tag": {
+        "uuid": SortConfig([standard_sort("uuid")], None),
+        "name": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
+        "prettyName": SortConfig([standard_sort("pretty_name")], None),
+    },
 }

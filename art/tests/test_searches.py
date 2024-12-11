@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from app_admin.models import User
 from art import searches
-from art.models import Chapter, Story
+from art.models import Chapter, Story, Tag
 
 
 class AllSearchesTestCase(TestCase):
@@ -38,6 +38,17 @@ class AllSearchesTestCase(TestCase):
                 "name": ["test"],
                 "name_exact": ["test"],
                 "text": ["test"],
+            },
+        },
+        "tag": {
+            "get_queryset": lambda: Tag.objects.all(),
+            "searches": {
+                "uuid": [str(uuid.uuid4())],
+                "name": ["test"],
+                "name_exact": ["test"],
+                "prettyName": ["test"],
+                "prettyName_exact": ["test"],
+                "description": ["test"],
             },
         },
     }

@@ -25,6 +25,24 @@ class SchemasTestCase(SimpleTestCase):
             [F("title").desc(), F("uuid").asc()],
         )
 
+    def test_ListSchema_default_sort_enabled(self):
+        list_schema = ListSchema.model_validate({})
+        self.assertTrue(list_schema.default_sort_enabled)
+
+        list_schema = ListSchema.model_validate(
+            {
+                "defaultSortEnabled": False,
+            }
+        )
+        self.assertFalse(list_schema.default_sort_enabled)
+
+        list_schema = ListSchema.model_validate(
+            {
+                "default_sort_enabled": False,
+            }
+        )
+        self.assertTrue(list_schema.default_sort_enabled)
+
     def test_ChapterInSchema(self):
         ChapterInSchema(name="Name", markdown="Markdown")
 

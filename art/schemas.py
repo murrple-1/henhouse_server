@@ -1,8 +1,9 @@
+import datetime
 from typing import Optional, Self
 
 from django.db.models import OrderBy, Q
 from django.http import HttpRequest
-from ninja import ModelSchema, Schema
+from ninja import Field, ModelSchema, Schema
 from pydantic import model_validator
 
 from art.models import Chapter, Story, Tag
@@ -43,9 +44,11 @@ class StoryOutSchema(ModelSchema):
 
 
 class StoryOutDetailsSchema(ModelSchema):
+    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
+
     class Meta:
         model = Story
-        fields = ["uuid", "title", "creator", "created_at", "tags"]
+        fields = ["uuid", "title", "creator", "tags"]
 
 
 class ChapterInSchema(ModelSchema):
@@ -86,6 +89,9 @@ class ChapterOutSchema(ModelSchema):
 
 
 class ChapterOutDetailsSchema(ModelSchema):
+    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
+    publishedAt: datetime.datetime | None = Field(None, alias="published_at")
+
     class Meta:
         model = Chapter
         fields = [
@@ -94,8 +100,6 @@ class ChapterOutDetailsSchema(ModelSchema):
             "name",
             "markdown",
             "story",
-            "created_at",
-            "published_at",
         ]
 
 
@@ -105,10 +109,18 @@ class TagOutSchema(ModelSchema):
         fields = ["uuid", "name"]
 
 
+class TagOutDetailsSchema(ModelSchema):
+    prettyName: str = Field("", alias="pretty_name")
+
+    class Meta:
+        model = Tag
+        fields = ["uuid", "name", "description"]
+
+
 class ListSchema(Schema):
     search: str | None = None
     sort: str | None = None
-    default_sort_enabled: bool = True
+    default_sort_enabled: bool = Field(True, alias="defaultSortEnabled")
 
     def get_filter_args(self, object_name: str, request: HttpRequest) -> list[Q]:
         if self.search is None:

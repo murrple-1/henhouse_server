@@ -12,6 +12,7 @@ class Story(models.Model):
         settings.AUTH_USER_MODEL, related_name="stories", on_delete=models.CASCADE
     )
     created_at = models.DateTimeField(default=timezone.now)
+    is_nsfw = models.BooleanField(default=False)
     tags = models.ManyToManyField("Tag", related_name="stories", blank=True)
     favorites_of = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="favorite_stories", blank=True
@@ -78,10 +79,12 @@ class Chapter(models.Model):
 
 class Tag(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128, unique=True, blank=False)
+    pretty_name = models.CharField(max_length=128, blank=False)
+    description = models.TextField(default="", blank=True)
 
     def __str__(self) -> str:
-        return f"Tag: {self.name}"
+        return f"Tag: {self.pretty_name} ({self.name})"
 
 
 class ReportKind(models.IntegerChoices):

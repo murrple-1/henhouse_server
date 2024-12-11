@@ -17,6 +17,16 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
         "name": lambda request, search_obj: Q(name__icontains=search_obj),
         "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
     },
+    "tag": {
+        "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
+        "name": lambda request, search_obj: Q(name__icontains=search_obj),
+        "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
+        "prettyName": lambda request, search_obj: Q(pretty_name__icontains=search_obj),
+        "prettyName_exact": lambda request, search_obj: Q(
+            pretty_name__iexact=search_obj
+        ),
+        "description": lambda request, search_obj: Q(description__iexact=search_obj),
+    },
 }
 
 if connection.vendor == "postgresql":  # pragma: no cover
