@@ -138,12 +138,12 @@ class ApiTestCase(TestCase):
             },
         )
 
-        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
+        tag = await Tag.objects.acreate(name="test", pretty_name="Test")
         response = await test_client.post(
             "/story",
             json={
                 "title": "Test Story 2",
-                "tags": [str(tag.uuid)],
+                "tags": [str(tag.name)],
             },
             user=user,
         )
@@ -171,7 +171,7 @@ class ApiTestCase(TestCase):
             "/story",
             json={
                 "title": "Test Story",
-                "tags": [str(uuid.UUID(int=0))],
+                "tags": ["notfound"],
             },
             user=user,
         )
@@ -232,9 +232,9 @@ class ApiTestCase(TestCase):
         self.assertEqual(story.title, "New Story Title")
         self.assertEqual(await story.tags.acount(), 0)
 
-        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
+        tag = await Tag.objects.acreate(name="test", pretty_name="Test")
         response = await test_client.patch(
-            f"/story/{story.uuid}", json={"tags": [str(tag.uuid)]}, user=user
+            f"/story/{story.uuid}", json={"tags": [str(tag.name)]}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -267,7 +267,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(title="Test Story", creator=user)
 
         response = await test_client.patch(
-            f"/story/{story.uuid}", json={"tags": [str(uuid.UUID(int=0))]}, user=user
+            f"/story/{story.uuid}", json={"tags": ["notfound"]}, user=user
         )
         self.assertEqual(response.status_code, 404, response.content)
 
@@ -696,7 +696,7 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"count": 0, "items": []})
 
-        await Tag.objects.acreate(pretty_name="Test", name="test")
+        await Tag.objects.acreate(name="test", pretty_name="Test")
 
         response = await test_client.get("/tag")
         self.assertEqual(response.status_code, 200, response.content)
@@ -705,14 +705,13 @@ class ApiTestCase(TestCase):
     async def test_tag_details(self):
         test_client = TestAsyncClient(router)
 
-        tag = await Tag.objects.acreate(pretty_name="Test", name="test")
+        tag = await Tag.objects.acreate(name="test", pretty_name="Test")
 
-        response = await test_client.get(f"/tag/{tag.uuid}")
+        response = await test_client.get(f"/tag/{tag.name}")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(
             response.json(),
             {
-                "uuid": str(tag.uuid),
                 "prettyName": tag.pretty_name,
                 "name": tag.name,
                 "description": tag.description,
@@ -722,5 +721,5 @@ class ApiTestCase(TestCase):
     async def test_tag_details_notfound(self):
         test_client = TestAsyncClient(router)
 
-        response = await test_client.get(f"/tag/{uuid.UUID(int=0)}")
+        response = await test_client.get("/tag/notfound")
         self.assertEqual(response.status_code, 404, response.content)

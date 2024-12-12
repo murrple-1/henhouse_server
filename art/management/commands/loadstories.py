@@ -71,7 +71,10 @@ class Command(BaseCommand):
 
         Tag.objects.bulk_create(
             (
-                Tag(pretty_name=tag_pretty_name, name=tag_pretty_name.lower())
+                Tag(
+                    name=_tag_pretty_name_to_name(tag_pretty_name),
+                    pretty_name=tag_pretty_name,
+                )
                 for tag_pretty_name in tag_pretty_names
             ),
             ignore_conflicts=True,

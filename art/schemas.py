@@ -106,7 +106,7 @@ class ChapterOutDetailsSchema(ModelSchema):
 class TagOutSchema(ModelSchema):
     class Meta:
         model = Tag
-        fields = ["uuid", "name"]
+        fields = ["name"]
 
 
 class TagOutDetailsSchema(ModelSchema):
@@ -114,7 +114,7 @@ class TagOutDetailsSchema(ModelSchema):
 
     class Meta:
         model = Tag
-        fields = ["uuid", "name", "description"]
+        fields = ["name", "description"]
 
 
 class ListSchema(Schema):

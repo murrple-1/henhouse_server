@@ -43,7 +43,6 @@ class AllSearchesTestCase(TestCase):
         "tag": {
             "get_queryset": lambda: Tag.objects.all(),
             "searches": {
-                "uuid": [str(uuid.uuid4())],
                 "name": ["test"],
                 "name_exact": ["test"],
                 "prettyName": ["test"],

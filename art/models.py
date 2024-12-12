@@ -78,8 +78,7 @@ class Chapter(models.Model):
 
 
 class Tag(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
-    name = models.CharField(max_length=128, unique=True, blank=False)
+    name = models.CharField(primary_key=True, max_length=128, blank=False)
     pretty_name = models.CharField(max_length=128, blank=False)
     description = models.TextField(default="", blank=True)
 

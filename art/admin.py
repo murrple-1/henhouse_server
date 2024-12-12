@@ -19,8 +19,8 @@ class StoryAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ["pretty_name", "name"]
-    search_fields = ["pretty_name", "name"]
+    list_display = ["name", "pretty_name"]
+    search_fields = ["name", "pretty_name"]
 
 
 @admin.register(StoryReport)

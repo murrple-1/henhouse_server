@@ -19,14 +19,11 @@ class Migration(migrations.Migration):
             name="Tag",
             fields=[
                 (
-                    "uuid",
-                    models.UUIDField(
-                        default=uuid_extensions.uuid7,
-                        primary_key=True,
-                        serialize=False,
-                    ),
+                    "name",
+                    models.CharField(primary_key=True, max_length=128, serialize=False),
                 ),
-                ("name", models.CharField(max_length=128, unique=True)),
+                ("pretty_name", models.CharField(max_length=128)),
+                ("description", models.TextField(default="", blank=True)),
             ],
         ),
         migrations.CreateModel(
@@ -41,6 +38,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("title", models.TextField()),
+                ("is_nsfw", models.BooleanField(default=False)),
                 ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
                 (
                     "creator",

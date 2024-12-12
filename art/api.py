@@ -105,7 +105,7 @@ async def create_story(request: HttpRequest, input_story: StoryInSchema):
     assert isinstance(user, AbstractBaseUser)
 
     tag_uuids = frozenset(input_story.tags)
-    tags: list[Tag] = [t async for t in Tag.objects.filter(uuid__in=tag_uuids)]
+    tags: list[Tag] = [t async for t in Tag.objects.filter(name__in=tag_uuids)]
     if len(tag_uuids) != len(tags):
         raise Http404
 
@@ -146,7 +146,7 @@ async def patch_story(
     tags: Iterable[Tag] | None = None
     if input_story.tags is not None:
         tag_uuids = frozenset(input_story.tags)
-        tags = [t async for t in Tag.objects.filter(uuid__in=tag_uuids)]
+        tags = [t async for t in Tag.objects.filter(name__in=tag_uuids)]
         if len(tag_uuids) != len(tags):
             raise Http404
 
@@ -368,13 +368,13 @@ else:  # pragma: no cover
 
 
 @router.get(
-    "/tag/{tag_id}",
+    "/tag/{tag_name}",
     response=TagOutDetailsSchema,
     auth=auth_optional,
     tags=["tag"],
 )
-async def tag_details(request: HttpRequest, tag_id: uuid.UUID):
+async def tag_details(request: HttpRequest, tag_name: str):
     try:
-        return await Tag.objects.aget(uuid=tag_id)
+        return await Tag.objects.aget(name=tag_name)
     except Tag.DoesNotExist:
         raise Http404
