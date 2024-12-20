@@ -47,7 +47,9 @@ if _async_pagination_works:
         filter_args += list_params.get_filter_args("story", request)
 
         return (
-            Story.annotate_from_chapters(Story.objects.all())
+            Story.annotate_search_vectors(
+                Story.annotate_from_chapters(Story.objects.all())
+            )
             .filter(*filter_args)
             .order_by(*list_params.get_order_by_args("story"))
         )
@@ -68,7 +70,9 @@ else:  # pragma: no cover
         filter_args += list_params.get_filter_args("story", request)
 
         return (
-            Story.annotate_from_chapters(Story.objects.all())
+            Story.annotate_search_vectors(
+                Story.annotate_from_chapters(Story.objects.all())
+            )
             .filter(*filter_args)
             .order_by(*list_params.get_order_by_args("story"))
         )
