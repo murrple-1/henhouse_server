@@ -16,6 +16,7 @@ uuid7 = "*"
 python-redis-lock = {version = "*", extras = ["django"]}
 pyparsing = "*"
 python-dateutil = "*"
+email-validator = "*"
 
 [dev-packages]
 coverage = "*"

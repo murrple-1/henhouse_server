@@ -31,7 +31,7 @@ router = RouterPaginated()
 # TODO can be made True when https://github.com/vitalik/django-ninja/pull/1340 is resolved
 _async_pagination_works = False
 
-if _async_pagination_works:
+if _async_pagination_works:  # pragma: no cover
 
     @router.get(
         "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
@@ -183,7 +183,7 @@ async def delete_story(request: HttpRequest, story_id: uuid.UUID):
     return None
 
 
-if _async_pagination_works:
+if _async_pagination_works:  # pragma: no cover
 
     @router.get(
         "/story/{story_id}/chapter",
@@ -352,7 +352,7 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
     return None
 
 
-if _async_pagination_works:
+if _async_pagination_works:  # pragma: no cover
 
     @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
     async def list_tags(request: HttpRequest, list_params: Query[ListSchema]):
