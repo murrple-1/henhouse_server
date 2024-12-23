@@ -1,3 +1,6 @@
+import asyncio
+
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError
 from ninja import Router
 from django.http import HttpRequest
@@ -11,7 +14,14 @@ from ninja.errors import HttpError
 
 from app_admin.models import User
 from app_admin.security import must_auth
-from app_admin.schemas import LoginInSchema, RegisterInSchema
+from app_admin.schemas import (
+    LoginInSchema,
+    RegisterInSchema,
+    ChangePasswordInSchema,
+    UserAttributesInSchema,
+    UserDeleteInSchema,
+    UserOutSchema,
+)
 
 router = Router()
 
@@ -55,14 +65,20 @@ async def login(request: HttpRequest, input_login: LoginInSchema):
 
 @router.post("/logout", response={204: None}, auth=must_auth, tags=["auth"])
 async def logout(request: HttpRequest):
-    # TODO implement
     await django_alogout(request)
     return None
 
 
-@router.put("/user/password", auth=must_auth, tags=["auth"])
-async def change_password(request: HttpRequest):
-    # TODO implement
+@router.put("/user/password", response={204: None}, auth=must_auth, tags=["auth"])
+async def change_password(
+    request: HttpRequest, input_change_password: ChangePasswordInSchema
+):
+    user = request.user
+    assert isinstance(user, AbstractBaseUser)
+
+    user.set_password(input_change_password.password)
+    await user.asave(update_fields=("password",))
+
     return None
 
 
@@ -78,19 +94,43 @@ async def password_reset_confirm(request: HttpRequest):
     return None
 
 
-@router.get("/user", auth=must_auth, tags=["auth"])
+@router.get("/user", response=UserOutSchema, auth=must_auth, tags=["auth"])
 async def user_details(request: HttpRequest):
-    # TODO implement
+    return request.user
+
+
+@router.put("/user/attributes", response={204: None}, auth=must_auth, tags=["auth"])
+async def update_user_attributes(
+    request: HttpRequest, input_attributes: UserAttributesInSchema
+):
+    user = request.user
+    assert isinstance(user, User)
+
+    user.attributes.update(input_attributes.attributes)
+
+    del_keys = set()
+    for key, value in user.attributes.items():
+        if value is None:
+            del_keys.add(key)
+
+    for key in del_keys:
+        del user.attributes[key]
+
+    await user.asave(update_fields=["attributes"])
     return None
 
 
-@router.put("/user/attributes", auth=must_auth, tags=["auth"])
-async def update_user_attributes(request: HttpRequest):
-    # TODO implement
-    return None
+@router.delete("/user", response={204: None}, auth=must_auth, tags=["auth"])
+async def delete_user(request: HttpRequest, input_delete: UserDeleteInSchema):
+    user = request.user
+    assert isinstance(user, User)
 
+    user_ = await django_aauthenticate(
+        request, username=user.username, password=input_delete.password
+    )
+    if not user_:
+        raise HttpError(401, "invalid credentials")
 
-@router.delete("/user", auth=must_auth, tags=["auth"])
-async def delete_user(request: HttpRequest):
-    # TODO implement
+    await asyncio.gather(django_alogout(request), user.adelete())
+
     return None

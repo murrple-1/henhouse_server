@@ -315,6 +315,7 @@ else:
     raise RuntimeError("unknown 'TEST_RUNNER_TYPE'")
 
 TOKEN_EXPIRY_INTERVAL = datetime.timedelta(days=14)
+VALIDATE_EMAIL_DELIVERABILITY = True
 
 try:
     from .local_settings import *  # noqa: F403
