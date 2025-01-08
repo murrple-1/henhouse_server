@@ -5,7 +5,13 @@ from django.test import SimpleTestCase
 from pydantic import ValidationError
 from django.db.models import Q, F
 
-from art.schemas import ChapterInSchema, ListSchema
+from art.schemas import (
+    ChapterInSchema,
+    ChapterPatchInSchema,
+    ListSchema,
+    StoryInSchema,
+    StoryPatchInSchema,
+)
 
 
 class SchemasTestCase(SimpleTestCase):
@@ -43,11 +49,40 @@ class SchemasTestCase(SimpleTestCase):
         )
         self.assertTrue(list_schema.default_sort_enabled)
 
+    def test_StoryInSchema(self):
+        StoryInSchema(title="Title", synopsis="Synopsis", tags=[])
+        StoryInSchema(title="Title", synopsis="Synopsis", tags=["tag"])
+
+        with self.assertRaises(ValidationError):
+            StoryInSchema(title="", synopsis="Synopsis", tags=["tag"])
+
+        with self.assertRaises(ValidationError):
+            StoryInSchema(title="Title", synopsis="", tags=["tag"])
+
+    def test_StoryPatchInSchema(self):
+        StoryPatchInSchema(title="Title", synopsis="Synopsis", tags=[])
+        StoryPatchInSchema(title="Title", synopsis="Synopsis", tags=["tag"])
+
+        with self.assertRaises(ValidationError):
+            StoryPatchInSchema(title="")
+
+        with self.assertRaises(ValidationError):
+            StoryPatchInSchema(synopsis="")
+
     def test_ChapterInSchema(self):
-        ChapterInSchema(name="Name", markdown="Markdown")
+        ChapterInSchema(name="Name", markdown="Markdown", synopsis="Synopsis")
 
         with self.assertRaises(ValidationError):
-            ChapterInSchema(name="", markdown="Markdown")
+            ChapterInSchema(name="", markdown="Markdown", synopsis="Synopsis")
 
         with self.assertRaises(ValidationError):
-            ChapterInSchema(name="Name", markdown="")
+            ChapterInSchema(name="Name", markdown="", synopsis="Synopsis")
+
+    def test_ChapterPatchInSchema(self):
+        ChapterPatchInSchema(name="Name", markdown="Markdown", synopsis="Synopsis")
+
+        with self.assertRaises(ValidationError):
+            ChapterPatchInSchema(name="")
+
+        with self.assertRaises(ValidationError):
+            ChapterPatchInSchema(markdown="")

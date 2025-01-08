@@ -11,11 +11,16 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
     "story": {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
         "title_exact": lambda request, search_obj: Q(title__iexact=search_obj),
+        "synopsis": lambda request, search_obj: Q(synopsis__icontains=search_obj),
+        "creator": lambda request, search_obj: Q(
+            creator_id__in=UuidList.convertto(search_obj)
+        ),
     },
     "chapter": {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
         "name": lambda request, search_obj: Q(name__icontains=search_obj),
         "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
+        "synopsis": lambda request, search_obj: Q(synopsis__icontains=search_obj),
     },
     "tag": {
         "name": lambda request, search_obj: Q(name__icontains=search_obj),

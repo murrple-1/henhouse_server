@@ -16,7 +16,7 @@ from query_utils import sort as sortutils
 class StoryInSchema(ModelSchema):
     class Meta:
         model = Story
-        fields = ["title", "tags"]
+        fields = ["title", "synopsis", "tags"]
 
     @model_validator(mode="after")
     def check_title(self) -> Self:
@@ -27,20 +27,49 @@ class StoryInSchema(ModelSchema):
         self.title = title
         return self
 
+    @model_validator(mode="after")
+    def check_synopsis(self) -> Self:
+        synopsis = self.synopsis
+        synopsis = synopsis.strip()
+        if len(synopsis) < 1:
+            raise ValueError("synopsis must be non-empty")
+        self.synopsis = synopsis
+        return self
+
 
 class StoryPatchInSchema(ModelSchema):
     published: Optional[bool] = None
 
     class Meta:
         model = Story
-        fields = ["title", "tags"]
+        fields = ["title", "synopsis", "tags"]
         fields_optional = "__all__"
+
+    @model_validator(mode="after")
+    def check_title(self) -> Self:
+        title = self.title
+        if title is not None:
+            title = title.strip()
+            if len(title) < 1:
+                raise ValueError("title must be non-empty")
+            self.title = title
+        return self
+
+    @model_validator(mode="after")
+    def check_synopsis(self) -> Self:
+        synopsis = self.synopsis
+        if synopsis is not None:
+            synopsis = synopsis.strip()
+            if len(synopsis) < 1:
+                raise ValueError("synopsis must be non-empty")
+            self.synopsis = synopsis
+        return self
 
 
 class StoryOutSchema(ModelSchema):
     class Meta:
         model = Story
-        fields = ["uuid", "title"]
+        fields = ["uuid", "title", "synopsis"]
 
 
 class StoryOutDetailsSchema(ModelSchema):
@@ -48,13 +77,13 @@ class StoryOutDetailsSchema(ModelSchema):
 
     class Meta:
         model = Story
-        fields = ["uuid", "title", "creator", "tags"]
+        fields = ["uuid", "title", "synopsis", "creator", "tags"]
 
 
 class ChapterInSchema(ModelSchema):
     class Meta:
         model = Chapter
-        fields = ["name", "markdown"]
+        fields = ["name", "synopsis", "markdown"]
 
     @model_validator(mode="after")
     def check_name(self) -> Self:
@@ -78,14 +107,34 @@ class ChapterInSchema(ModelSchema):
 class ChapterPatchInSchema(ModelSchema):
     class Meta:
         model = Chapter
-        fields = ["name", "markdown"]
+        fields = ["name", "synopsis", "markdown"]
         fields_optional = "__all__"
+
+    @model_validator(mode="after")
+    def check_name(self) -> Self:
+        name = self.name
+        if name is not None:
+            name = name.strip()
+            if len(name) < 1:
+                raise ValueError("name must be non-empty")
+            self.name = name
+        return self
+
+    @model_validator(mode="after")
+    def check_markdown(self) -> Self:
+        markdown = self.markdown
+        if markdown is not None:
+            markdown = markdown.strip()
+            if len(markdown) < 1:
+                raise ValueError("markdown must be non-empty")
+            self.markdown = markdown
+        return self
 
 
 class ChapterOutSchema(ModelSchema):
     class Meta:
         model = Chapter
-        fields = ["uuid", "index", "name"]
+        fields = ["uuid", "index", "name", "synopsis"]
 
 
 class ChapterOutDetailsSchema(ModelSchema):
@@ -98,6 +147,7 @@ class ChapterOutDetailsSchema(ModelSchema):
             "uuid",
             "index",
             "name",
+            "synopsis",
             "markdown",
             "story",
         ]

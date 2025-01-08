@@ -4,10 +4,13 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
     "story": {
         "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
         "title": SortConfig([standard_sort("title")], None),
+        "synopsis": SortConfig([standard_sort("synopsis")], None),
+        "creator": SortConfig([standard_sort("creator__username")], None),
     },
     "chapter": {
         "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
         "name": SortConfig([standard_sort("name")], None),
+        "synopsis": SortConfig([standard_sort("synopsis")], None),
     },
     "tag": {
         "name": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),

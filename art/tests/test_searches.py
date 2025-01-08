@@ -27,6 +27,8 @@ class AllSearchesTestCase(TestCase):
                 "title": ["test"],
                 "title_exact": ["test"],
                 "storyText": ["test"],
+                "synopsis": ["test"],
+                "creator": [str(uuid.uuid4())],
             },
         },
         "chapter": {
@@ -38,6 +40,7 @@ class AllSearchesTestCase(TestCase):
                 "name": ["test"],
                 "name_exact": ["test"],
                 "text": ["test"],
+                "synopsis": ["test"],
             },
         },
         "tag": {

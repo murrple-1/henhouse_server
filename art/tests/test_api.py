@@ -26,7 +26,9 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"items": [], "count": 0})
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.get("/story")
 
@@ -59,7 +61,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.get(f"/story/{story.uuid}")
         self.assertEqual(response.status_code, 404, response.content)
@@ -77,6 +81,7 @@ class ApiTestCase(TestCase):
             json_,
             {
                 "title": "Test Story",
+                "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "tags": [],
                 "creator": str(user.uuid),
@@ -86,6 +91,7 @@ class ApiTestCase(TestCase):
         await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=timezone.now(),
@@ -104,6 +110,7 @@ class ApiTestCase(TestCase):
             json_,
             {
                 "title": "Test Story",
+                "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "tags": [],
                 "creator": str(user.uuid),
@@ -119,6 +126,7 @@ class ApiTestCase(TestCase):
             "/story",
             json={
                 "title": "Test Story 1",
+                "synopsis": "Test Story 1 Synopsis",
                 "tags": [],
             },
             user=user,
@@ -135,6 +143,7 @@ class ApiTestCase(TestCase):
             json_,
             {
                 "title": "Test Story 1",
+                "synopsis": "Test Story 1 Synopsis",
             },
         )
 
@@ -143,6 +152,7 @@ class ApiTestCase(TestCase):
             "/story",
             json={
                 "title": "Test Story 2",
+                "synopsis": "Test Story 2 Synopsis",
                 "tags": [str(tag.name)],
             },
             user=user,
@@ -159,6 +169,7 @@ class ApiTestCase(TestCase):
             json_,
             {
                 "title": "Test Story 2",
+                "synopsis": "Test Story 2 Synopsis",
             },
         )
 
@@ -171,6 +182,7 @@ class ApiTestCase(TestCase):
             "/story",
             json={
                 "title": "Test Story",
+                "synopsis": "Test Story Synopsis",
                 "tags": ["notfound"],
             },
             user=user,
@@ -183,7 +195,7 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
         response = await test_client.post(
-            "/story", json={"title": "", "tags": []}, user=user
+            "/story", json={"title": "", "synopsis": "Synopsis", "tags": []}, user=user
         )
         self.assertEqual(response.status_code, 422, response.content)
 
@@ -202,7 +214,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.patch(f"/story/{story.uuid}", json={}, user=user)
         self.assertEqual(response.status_code, 200, response.content)
@@ -211,11 +225,14 @@ class ApiTestCase(TestCase):
             response.json(),
             {
                 "title": "Test Story",
+                "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
             },
         )
-        await story.arefresh_from_db(fields=("title",))
+        await story.arefresh_from_db(fields=("title", "synopsis"))
         self.assertEqual(story.title, "Test Story")
+        self.assertEqual(story.synopsis, "Test Story Synopsis")
+        self.assertEqual(await story.tags.acount(), 0)
 
         response = await test_client.patch(
             f"/story/{story.uuid}", json={"title": "New Story Title"}, user=user
@@ -225,11 +242,13 @@ class ApiTestCase(TestCase):
             response.json(),
             {
                 "title": "New Story Title",
+                "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
             },
         )
-        await story.arefresh_from_db(fields=("title",))
+        await story.arefresh_from_db(fields=("title", "synopsis"))
         self.assertEqual(story.title, "New Story Title")
+        self.assertEqual(story.synopsis, "Test Story Synopsis")
         self.assertEqual(await story.tags.acount(), 0)
 
         tag = await Tag.objects.acreate(name="test", pretty_name="Test")
@@ -242,11 +261,31 @@ class ApiTestCase(TestCase):
             response.json(),
             {
                 "title": "New Story Title",
+                "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
             },
         )
-        await story.arefresh_from_db(fields=("title",))
+        await story.arefresh_from_db(fields=("title", "synopsis"))
         self.assertEqual(story.title, "New Story Title")
+        self.assertEqual(story.synopsis, "Test Story Synopsis")
+        self.assertEqual(await story.tags.acount(), 1)
+
+        response = await test_client.patch(
+            f"/story/{story.uuid}", json={"synopsis": "New Story Synopsis"}, user=user
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        self.assertEqual(
+            response.json(),
+            {
+                "title": "New Story Title",
+                "synopsis": "New Story Synopsis",
+                "uuid": str(story.uuid),
+            },
+        )
+        await story.arefresh_from_db(fields=("title", "synopsis"))
+        self.assertEqual(story.title, "New Story Title")
+        self.assertEqual(story.synopsis, "New Story Synopsis")
         self.assertEqual(await story.tags.acount(), 1)
 
     async def test_patch_story_storynotfound(self):
@@ -264,7 +303,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.patch(
             f"/story/{story.uuid}", json={"tags": ["notfound"]}, user=user
@@ -276,7 +317,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.patch(f"/story/{story.uuid}", json={})
         self.assertEqual(response.status_code, 401, response.content)
@@ -286,7 +329,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.delete(f"/story/{story.uuid}", user=user)
         self.assertEqual(response.status_code, 204, response.content)
@@ -304,7 +349,9 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.delete(f"/story/{story.uuid}")
         self.assertEqual(response.status_code, 401, response.content)
@@ -318,7 +365,9 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         def assert_empty_response(response: NinjaResponse):
             self.assertEqual(response.status_code, 200, response.content)
@@ -345,6 +394,7 @@ class ApiTestCase(TestCase):
         chapter1 = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,
@@ -418,11 +468,14 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         chapter1 = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,
@@ -451,6 +504,7 @@ class ApiTestCase(TestCase):
                     "index": chapter1.index,
                     "name": chapter1.name,
                     "markdown": chapter1.markdown,
+                    "synopsis": chapter1.synopsis,
                     "story": str(story.uuid),
                 },
             )
@@ -489,11 +543,17 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.post(
             f"/story/{story.uuid}/chapter",
-            json={"name": "Chapter 1", "markdown": "Chapter Text"},
+            json={
+                "name": "Chapter 1",
+                "synopsis": "Synopsis",
+                "markdown": "Chapter Text",
+            },
             user=user,
         )
         self.assertEqual(response.status_code, 200, response.content)
@@ -509,6 +569,7 @@ class ApiTestCase(TestCase):
             json_,
             {
                 "name": "Chapter 1",
+                "synopsis": "Synopsis",
                 "index": 0,
             },
         )
@@ -518,18 +579,20 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         response = await test_client.post(
             f"/story/{story.uuid}/chapter",
-            json={"name": "", "markdown": "Chapter Text"},
+            json={"name": "", "markdown": "Chapter Text", "synopsis": "Synopsis"},
             user=user,
         )
         self.assertEqual(response.status_code, 422, response.content)
 
         response = await test_client.post(
             f"/story/{story.uuid}/chapter",
-            json={"name": "Chapter 1", "markdown": ""},
+            json={"name": "Chapter 1", "markdown": "", "synopsis": "Synopsis"},
             user=user,
         )
         self.assertEqual(response.status_code, 422, response.content)
@@ -540,9 +603,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
-        input_json = {"name": "Chapter 1", "markdown": "Chapter Text"}
+        input_json = {
+            "name": "Chapter 1",
+            "markdown": "Chapter Text",
+            "synopsis": "Synopsis",
+        }
         response = await test_client.post(
             f"/story/{story.uuid}/chapter", json=input_json, user=alt_user
         )
@@ -558,11 +627,14 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         chapter = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,
@@ -577,12 +649,14 @@ class ApiTestCase(TestCase):
             {
                 "index": 0,
                 "name": "Chapter 1",
+                "synopsis": "",
                 "uuid": str(chapter.uuid),
             },
         )
-        await chapter.arefresh_from_db(fields=("name", "markdown"))
+        await chapter.arefresh_from_db(fields=("name", "markdown", "synopsis"))
         self.assertEqual(chapter.name, "Chapter 1")
         self.assertEqual(chapter.markdown, "Chapter Text")
+        self.assertEqual(chapter.synopsis, "")
 
         response = await test_client.patch(
             f"/chapter/{chapter.uuid}", json={"name": "Introduction"}, user=user
@@ -593,12 +667,14 @@ class ApiTestCase(TestCase):
             {
                 "index": 0,
                 "name": "Introduction",
+                "synopsis": "",
                 "uuid": str(chapter.uuid),
             },
         )
-        await chapter.arefresh_from_db(fields=("name", "markdown"))
+        await chapter.arefresh_from_db(fields=("name", "markdown", "synopsis"))
         self.assertEqual(chapter.name, "Introduction")
         self.assertEqual(chapter.markdown, "Chapter Text")
+        self.assertEqual(chapter.synopsis, "")
 
         response = await test_client.patch(
             f"/chapter/{chapter.uuid}",
@@ -611,12 +687,54 @@ class ApiTestCase(TestCase):
             {
                 "index": 0,
                 "name": "Introduction",
+                "synopsis": "",
                 "uuid": str(chapter.uuid),
             },
         )
-        await chapter.arefresh_from_db(fields=("name", "markdown"))
+        await chapter.arefresh_from_db(fields=("name", "markdown", "synopsis"))
         self.assertEqual(chapter.name, "Introduction")
         self.assertEqual(chapter.markdown, "Introduction Text")
+        self.assertEqual(chapter.synopsis, "")
+
+        response = await test_client.patch(
+            f"/chapter/{chapter.uuid}",
+            json={"synopsis": "Synopsis"},
+            user=user,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(
+            response.json(),
+            {
+                "index": 0,
+                "name": "Introduction",
+                "synopsis": "Synopsis",
+                "uuid": str(chapter.uuid),
+            },
+        )
+        await chapter.arefresh_from_db(fields=("name", "markdown", "synopsis"))
+        self.assertEqual(chapter.name, "Introduction")
+        self.assertEqual(chapter.markdown, "Introduction Text")
+        self.assertEqual(chapter.synopsis, "Synopsis")
+
+        response = await test_client.patch(
+            f"/chapter/{chapter.uuid}",
+            json={"synopsis": ""},
+            user=user,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(
+            response.json(),
+            {
+                "index": 0,
+                "name": "Introduction",
+                "synopsis": "",
+                "uuid": str(chapter.uuid),
+            },
+        )
+        await chapter.arefresh_from_db(fields=("name", "markdown", "synopsis"))
+        self.assertEqual(chapter.name, "Introduction")
+        self.assertEqual(chapter.markdown, "Introduction Text")
+        self.assertEqual(chapter.synopsis, "")
 
     async def test_patch_chapter_notfound(self):
         test_client = TestAsyncClient(router)
@@ -624,11 +742,14 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         chapter = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,
@@ -649,11 +770,14 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         chapter = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,
@@ -668,11 +792,14 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
-        story = await Story.objects.acreate(title="Test Story", creator=user)
+        story = await Story.objects.acreate(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
 
         chapter = await Chapter.objects.acreate(
             story=story,
             name="Chapter 1",
+            synopsis="",
             index=0,
             markdown="Chapter Text",
             published_at=None,

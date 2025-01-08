@@ -8,6 +8,7 @@ from django.utils import timezone
 class Story(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     title = models.TextField()
+    synopsis = models.CharField(max_length=256)
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="stories", on_delete=models.CASCADE
     )
@@ -56,6 +57,7 @@ class Chapter(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     story = models.ForeignKey(Story, related_name="chapters", on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
+    synopsis = models.CharField(max_length=256)
     index = models.PositiveIntegerField()
     markdown = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)

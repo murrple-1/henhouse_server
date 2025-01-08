@@ -121,7 +121,9 @@ def _create_story_transaction(
     user: AbstractBaseUser, input_story: StoryInSchema, tags: list[Tag]
 ) -> Story:
     with transaction.atomic():
-        story = Story.objects.create(creator=user, title=input_story.title)
+        story = Story.objects.create(
+            creator=user, title=input_story.title, synopsis=input_story.synopsis
+        )
         story.tags.set(tags)
 
         return story
@@ -146,6 +148,10 @@ async def patch_story(
     if input_story.title is not None:
         story.title = input_story.title
         update_fields.add("title")
+
+    if input_story.synopsis is not None:
+        story.synopsis = input_story.synopsis
+        update_fields.add("synopsis")
 
     tags: Iterable[Tag] | None = None
     if input_story.tags is not None:
@@ -300,6 +306,7 @@ async def create_chapter(
     chapter = await Chapter.objects.acreate(
         story=story,
         name=input_chapter.name,
+        synopsis=input_chapter.synopsis,
         markdown=input_chapter.markdown,
         index=(index + 1),
     )
@@ -327,9 +334,12 @@ async def patch_chapter(
         chapter.name = input_chapter.name
         update_fields.add("name")
 
+    if input_chapter.synopsis is not None:
+        chapter.synopsis = input_chapter.synopsis
+        update_fields.add("synopsis")
+
     if input_chapter.markdown is not None:
         chapter.markdown = input_chapter.markdown
-
         update_fields.add("markdown")
 
     await chapter.asave(update_fields=update_fields)
