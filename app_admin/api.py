@@ -1,9 +1,10 @@
 import asyncio
+import uuid
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError
 from ninja import Router
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest
 from django.utils import timezone
 from django.contrib.auth import (
     alogin as django_alogin,
@@ -20,6 +21,7 @@ from app_admin.schemas import (
     ChangePasswordInSchema,
     UserAttributesInSchema,
     UserDeleteInSchema,
+    UserDetailsOutSchema,
     UserOutSchema,
 )
 
@@ -94,9 +96,20 @@ async def password_reset_confirm(request: HttpRequest):
     return None
 
 
-@router.get("/user", response=UserOutSchema, auth=must_auth, tags=["auth"])
+@router.get("/user", response=UserDetailsOutSchema, auth=must_auth, tags=["auth"])
 async def user_details(request: HttpRequest):
     return request.user
+
+
+@router.post("/user/lookup", response=list[UserOutSchema], tags=["auth"])
+async def user_lookup(request: HttpRequest, user_ids: list[uuid.UUID]):
+    user_ids_ = frozenset(user_ids)
+    users = [u async for u in User.objects.filter(uuid__in=user_ids_)]
+
+    if len(users) != len(user_ids_):
+        raise Http404
+
+    return users
 
 
 @router.put("/user/attributes", response={204: None}, auth=must_auth, tags=["auth"])

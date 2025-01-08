@@ -69,7 +69,13 @@ class ChangePasswordInSchema(Schema):
 class UserOutSchema(ModelSchema):
     class Meta:
         model = User
-        fields = ["username", "email", "attributes"]
+        fields = ["uuid", "username"]
+
+
+class UserDetailsOutSchema(ModelSchema):
+    class Meta:
+        model = User
+        fields = ["uuid", "username", "email", "attributes"]
 
 
 class UserAttributesInSchema(Schema):

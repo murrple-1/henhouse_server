@@ -1,5 +1,7 @@
+import asyncio
 from typing import Any, Dict
 from unittest.mock import Mock
+import uuid
 
 from django.test import TestCase
 from ninja.testing import TestAsyncClient as TestAsyncClient_
@@ -170,11 +172,51 @@ class ApiTestCase(TestCase):
         self.assertEqual(
             response.json(),
             {
+                "uuid": str(user.uuid),
                 "username": "user1",
                 "email": "test@test.com",
                 "attributes": {},
             },
         )
+
+    async def test_user_lookup(self):
+        test_client = TestAsyncClient(router)
+
+        users = await asyncio.gather(
+            User.objects.acreate_user("user1", "test1@test.com", "password"),
+            User.objects.acreate_user("user2", "test2@test.com", "password"),
+            User.objects.acreate_user("user3", "test3@test.com", "password"),
+        )
+
+        response = await test_client.post(
+            "/user/lookup", json=[str(u.uuid) for u in users]
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        json_ = response.json()
+        self.assertIsInstance(json_, list)
+        self.assertTrue(all(isinstance(e, dict) for e in json_))
+
+        for user in users:
+            self.assertIsNotNone(
+                next(
+                    (
+                        e
+                        for e in json_
+                        if e
+                        == {
+                            "uuid": str(user.uuid),
+                            "username": user.username,
+                        }
+                    ),
+                    None,
+                )
+            )
+
+    async def test_user_lookup_notfound(self):
+        test_client = TestAsyncClient(router)
+
+        response = await test_client.post("/user/lookup", json=[str(uuid.UUID(int=0))])
+        self.assertEqual(response.status_code, 404, response.content)
 
     async def test_update_user_attributes(self):
         test_client = TestAsyncClient(router)
