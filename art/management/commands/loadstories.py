@@ -50,7 +50,19 @@ class Command(BaseCommand):
             else:
                 creator = default_creator
 
-            story = Story(title=story_json["title"], creator=creator)
+            synopsis = story_json["synopsis"].strip()
+            if len(synopsis) > 256:
+                new_synopsis = f"{synopsis[:255]}…"
+                self.stderr.write(
+                    self.style.WARNING(f"'{synopsis}' rewritten to '{new_synopsis}'")
+                )
+                synopsis = new_synopsis
+
+            story = Story(
+                title=story_json["title"],
+                synopsis=synopsis,
+                creator=creator,
+            )
             setattr(
                 story,
                 "_tag_names",
@@ -59,10 +71,25 @@ class Command(BaseCommand):
             stories.append(story)
 
             for i, chapter_json in enumerate(story_json["chapters"]):
+                synopsis = (
+                    synopsis_
+                    if (synopsis_ := chapter_json["synopsis"]) != story.synopsis
+                    else ""
+                ).strip()
+                if len(synopsis) > 256:
+                    new_synopsis = f"{synopsis[:255]}…"
+                    self.stderr.write(
+                        self.style.WARNING(
+                            f"'{synopsis}' rewritten to '{new_synopsis}'"
+                        )
+                    )
+                    synopsis = new_synopsis
+
                 chapters.append(
                     Chapter(
                         story=story,
                         name=chapter_json["name"],
+                        synopsis=synopsis,
                         index=i,
                         markdown=chapter_json["markdown"],
                         published_at=now,
