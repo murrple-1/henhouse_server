@@ -69,7 +69,7 @@ class StoryPatchInSchema(ModelSchema):
 class StoryOutSchema(ModelSchema):
     class Meta:
         model = Story
-        fields = ["uuid", "title", "synopsis"]
+        fields = ["uuid", "title", "synopsis", "creator"]
 
 
 class StoryOutDetailsSchema(ModelSchema):
