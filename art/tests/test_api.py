@@ -144,6 +144,7 @@ class ApiTestCase(TestCase):
             {
                 "title": "Test Story 1",
                 "synopsis": "Test Story 1 Synopsis",
+                "creator": str(user.uuid),
             },
         )
 
@@ -170,6 +171,7 @@ class ApiTestCase(TestCase):
             {
                 "title": "Test Story 2",
                 "synopsis": "Test Story 2 Synopsis",
+                "creator": str(user.uuid),
             },
         )
 
@@ -227,6 +229,7 @@ class ApiTestCase(TestCase):
                 "title": "Test Story",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
+                "creator": str(user.uuid),
             },
         )
         await story.arefresh_from_db(fields=("title", "synopsis"))
@@ -244,6 +247,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
+                "creator": str(user.uuid),
             },
         )
         await story.arefresh_from_db(fields=("title", "synopsis"))
@@ -263,6 +267,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
+                "creator": str(user.uuid),
             },
         )
         await story.arefresh_from_db(fields=("title", "synopsis"))
@@ -281,6 +286,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "New Story Synopsis",
                 "uuid": str(story.uuid),
+                "creator": str(user.uuid),
             },
         )
         await story.arefresh_from_db(fields=("title", "synopsis"))
