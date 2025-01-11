@@ -133,12 +133,9 @@ class ApiTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
-        self.assertIsInstance(json_, dict)
-        assert isinstance(json_, dict)
-        self.assertIn("uuid", json_)
-        self.assertIsInstance(json_["uuid"], str)
-        uuid.UUID(json_["uuid"])
-        json_.pop("uuid")
+        uuid.UUID(json_.pop("uuid"))
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
             json_,
             {
@@ -160,12 +157,9 @@ class ApiTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
-        self.assertIsInstance(json_, dict)
-        assert isinstance(json_, dict)
-        self.assertIn("uuid", json_)
-        self.assertIsInstance(json_["uuid"], str)
-        uuid.UUID(json_["uuid"])
-        json_.pop("uuid")
+        uuid.UUID(json_.pop("uuid"))
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
             json_,
             {
@@ -222,9 +216,11 @@ class ApiTestCase(TestCase):
 
         response = await test_client.patch(f"/story/{story.uuid}", json={}, user=user)
         self.assertEqual(response.status_code, 200, response.content)
-
+        json_ = response.json()
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
-            response.json(),
+            json_,
             {
                 "title": "Test Story",
                 "synopsis": "Test Story Synopsis",
@@ -241,8 +237,11 @@ class ApiTestCase(TestCase):
             f"/story/{story.uuid}", json={"title": "New Story Title"}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
+        json_ = response.json()
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
-            response.json(),
+            json_,
             {
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
@@ -260,9 +259,11 @@ class ApiTestCase(TestCase):
             f"/story/{story.uuid}", json={"tags": [str(tag.name)]}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
-
+        json_ = response.json()
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
-            response.json(),
+            json_,
             {
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
@@ -279,9 +280,11 @@ class ApiTestCase(TestCase):
             f"/story/{story.uuid}", json={"synopsis": "New Story Synopsis"}, user=user
         )
         self.assertEqual(response.status_code, 200, response.content)
-
+        json_ = response.json()
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
-            response.json(),
+            json_,
             {
                 "title": "New Story Title",
                 "synopsis": "New Story Synopsis",
@@ -565,12 +568,7 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         json_ = response.json()
-        self.assertIsInstance(json_, dict)
-        assert isinstance(json_, dict)
-        self.assertIn("uuid", json_)
-        self.assertIsInstance(json_["uuid"], str)
-        uuid.UUID(json_["uuid"])
-        json_.pop("uuid")
+        uuid.UUID(json_.pop("uuid"))
         self.assertEqual(
             json_,
             {

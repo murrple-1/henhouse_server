@@ -4,7 +4,7 @@ from typing import Iterable
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
-from django.db.models import Max, Q, QuerySet, Value
+from django.db.models import Max, Q, Min, OuterRef, QuerySet, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest
 from ninja import Query
@@ -50,6 +50,13 @@ if _async_pagination_works:  # pragma: no cover
             Story.annotate_search_vectors(
                 Story.annotate_from_chapters(Story.objects.all())
             )
+            .annotate(
+                published_at=Subquery(
+                    Chapter.objects.filter(story_id=OuterRef("uuid"))
+                    .annotate(min_published_at=Min("published_at"))
+                    .values("min_published_at")
+                )
+            )
             .filter(*filter_args)
             .order_by(*list_params.get_order_by_args("story"))
         )
@@ -72,6 +79,13 @@ else:  # pragma: no cover
         return (
             Story.annotate_search_vectors(
                 Story.annotate_from_chapters(Story.objects.all())
+            )
+            .annotate(
+                published_at=Subquery(
+                    Chapter.objects.filter(story_id=OuterRef("uuid"))
+                    .annotate(min_published_at=Min("published_at"))
+                    .values("min_published_at")
+                )
             )
             .filter(*filter_args)
             .order_by(*list_params.get_order_by_args("story"))
@@ -125,6 +139,7 @@ def _create_story_transaction(
             creator=user, title=input_story.title, synopsis=input_story.synopsis
         )
         story.tags.set(tags)
+        setattr(story, "published_at", None)
 
         return story
 
@@ -139,7 +154,13 @@ async def patch_story(
     assert isinstance(user, AbstractBaseUser)
 
     try:
-        story = await Story.objects.aget(creator=user, uuid=story_id)
+        story = await Story.objects.annotate(
+            published_at=Subquery(
+                Chapter.objects.filter(story_id=OuterRef("uuid"))
+                .annotate(min_published_at=Min("published_at"))
+                .values("min_published_at")
+            )
+        ).aget(creator=user, uuid=story_id)
     except Story.DoesNotExist:
         raise Http404
 

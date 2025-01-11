@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, Self
 
-from django.db.models import Min, OrderBy, Q
+from django.db.models import OrderBy, Q
 from django.http import HttpRequest
 from ninja import Field, ModelSchema, Schema
 from pydantic import model_validator
@@ -67,22 +67,21 @@ class StoryPatchInSchema(ModelSchema):
 
 
 class StoryOutSchema(ModelSchema):
-    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
-    publishedAt: datetime.datetime = Field(datetime.datetime.min)
+    createdAt: datetime.datetime = Field(alias="created_at")
+    publishedAt: datetime.datetime | None = Field(alias="published_at")
 
     class Meta:
         model = Story
         fields = ["uuid", "title", "synopsis", "creator"]
 
     @staticmethod
-    def resolve_publishedAt(obj: Story):
-        return Chapter.objects.filter(story=obj).aggregate(
-            published_at=Min("published_at")
-        )["published_at"]
+    def annotate_from_schema():
+        # TODO implement?
+        pass
 
 
 class StoryOutDetailsSchema(ModelSchema):
-    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
+    createdAt: datetime.datetime = Field(alias="created_at")
 
     class Meta:
         model = Story
@@ -147,8 +146,8 @@ class ChapterOutSchema(ModelSchema):
 
 
 class ChapterOutDetailsSchema(ModelSchema):
-    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
-    publishedAt: datetime.datetime | None = Field(None, alias="published_at")
+    createdAt: datetime.datetime = Field(alias="created_at")
+    publishedAt: datetime.datetime | None = Field(alias="published_at")
 
     class Meta:
         model = Chapter
@@ -169,7 +168,7 @@ class TagOutSchema(ModelSchema):
 
 
 class TagOutDetailsSchema(ModelSchema):
-    prettyName: str = Field("", alias="pretty_name")
+    prettyName: str = Field(alias="pretty_name")
 
     class Meta:
         model = Tag
@@ -179,7 +178,7 @@ class TagOutDetailsSchema(ModelSchema):
 class ListInSchema(Schema):
     search: str | None = None
     sort: str | None = None
-    default_sort_enabled: bool = Field(True, alias="defaultSortEnabled")
+    default_sort_enabled: bool = Field(default=True, alias="defaultSortEnabled")
 
     def get_filter_args(self, object_name: str, request: HttpRequest) -> list[Q]:
         if self.search is None:
