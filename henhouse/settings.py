@@ -255,7 +255,7 @@ AUTHENTICATION_BACKENDS = [
 CSRF_TRUSTED_ORIGINS = (
     csrf_trusted_origins.split(",")
     if (csrf_trusted_origins := os.getenv("APP_CSRF_TRUSTED_ORIGINS"))
-    else ["http://localhost:4200"]
+    else ["http://localhost:5173"]
 )
 CSRF_COOKIE_SECURE = os.getenv("APP_CSRF_COOKIE_SECURE", "true") == "true"
 CSRF_COOKIE_SAMESITE = "None"

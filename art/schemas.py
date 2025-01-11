@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, Self
 
-from django.db.models import OrderBy, Q
+from django.db.models import Min, OrderBy, Q
 from django.http import HttpRequest
 from ninja import Field, ModelSchema, Schema
 from pydantic import model_validator
@@ -67,9 +67,18 @@ class StoryPatchInSchema(ModelSchema):
 
 
 class StoryOutSchema(ModelSchema):
+    createdAt: datetime.datetime = Field(datetime.datetime.min, alias="created_at")
+    publishedAt: datetime.datetime = Field(datetime.datetime.min)
+
     class Meta:
         model = Story
         fields = ["uuid", "title", "synopsis", "creator"]
+
+    @staticmethod
+    def resolve_publishedAt(obj: Story):
+        return Chapter.objects.filter(story=obj).aggregate(
+            published_at=Min("published_at")
+        )["published_at"]
 
 
 class StoryOutDetailsSchema(ModelSchema):
@@ -167,7 +176,7 @@ class TagOutDetailsSchema(ModelSchema):
         fields = ["name", "description"]
 
 
-class ListSchema(Schema):
+class ListInSchema(Schema):
     search: str | None = None
     sort: str | None = None
     default_sort_enabled: bool = Field(True, alias="defaultSortEnabled")

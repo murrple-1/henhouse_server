@@ -188,9 +188,9 @@ class ApiTestCase(TestCase):
             User.objects.acreate_user("user3", "test3@test.com", "password"),
         )
 
-        response = await test_client.post(
-            "/user/lookup", json=[str(u.uuid) for u in users]
-        )
+        query_params = "&".join(f"userIds={u.uuid}" for u in users)
+
+        response = await test_client.get(f"/user/lookup?{query_params}")
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
         self.assertIsInstance(json_, list)
@@ -215,7 +215,9 @@ class ApiTestCase(TestCase):
     async def test_user_lookup_notfound(self):
         test_client = TestAsyncClient(router)
 
-        response = await test_client.post("/user/lookup", json=[str(uuid.UUID(int=0))])
+        query_params = "&".join([f"userIds={uuid.UUID(int=0)}"])
+
+        response = await test_client.get(f"/user/lookup?{query_params}")
         self.assertEqual(response.status_code, 404, response.content)
 
     async def test_update_user_attributes(self):

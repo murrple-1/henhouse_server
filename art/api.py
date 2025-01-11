@@ -17,7 +17,7 @@ from art.schemas import (
     ChapterOutDetailsSchema,
     ChapterOutSchema,
     ChapterPatchInSchema,
-    ListSchema,
+    ListInSchema,
     StoryInSchema,
     StoryOutDetailsSchema,
     StoryOutSchema,
@@ -36,7 +36,7 @@ if _async_pagination_works:  # pragma: no cover
     @router.get(
         "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
     )
-    async def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
+    async def list_stories(request: HttpRequest, list_params: Query[ListInSchema]):
         user = request.user
         filter_args: list[Q]
         if user.is_authenticated:
@@ -59,7 +59,7 @@ else:  # pragma: no cover
     @router.get(
         "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
     )
-    def list_stories(request: HttpRequest, list_params: Query[ListSchema]):
+    def list_stories(request: HttpRequest, list_params: Query[ListInSchema]):
         user = request.user
         filter_args: list[Q]
         if user.is_authenticated:
@@ -365,7 +365,7 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
 if _async_pagination_works:  # pragma: no cover
 
     @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-    async def list_tags(request: HttpRequest, list_params: Query[ListSchema]):
+    async def list_tags(request: HttpRequest, list_params: Query[ListInSchema]):
         filter_args: list[Q] = list_params.get_filter_args("tag", request)
         return Tag.objects.filter(*filter_args).order_by(
             *list_params.get_order_by_args("tag")
@@ -374,7 +374,7 @@ if _async_pagination_works:  # pragma: no cover
 else:  # pragma: no cover
 
     @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
-    def list_tags(request: HttpRequest, list_params: Query[ListSchema]):
+    def list_tags(request: HttpRequest, list_params: Query[ListInSchema]):
         filter_args: list[Q] = list_params.get_filter_args("tag", request)
         return Tag.objects.filter(*filter_args).order_by(
             *list_params.get_order_by_args("tag")

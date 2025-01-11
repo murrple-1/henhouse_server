@@ -1,10 +1,9 @@
 import asyncio
-import uuid
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError
-from ninja import Router
-from django.http import Http404, HttpRequest
+from ninja import Query, Router
+from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
 from django.contrib.auth import (
     alogin as django_alogin,
@@ -12,6 +11,7 @@ from django.contrib.auth import (
     aauthenticate as django_aauthenticate,
 )
 from ninja.errors import HttpError
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from app_admin.models import User
 from app_admin.security import must_auth
@@ -22,6 +22,7 @@ from app_admin.schemas import (
     UserAttributesInSchema,
     UserDeleteInSchema,
     UserDetailsOutSchema,
+    UserLookupInSchema,
     UserOutSchema,
 )
 
@@ -101,9 +102,9 @@ async def user_details(request: HttpRequest):
     return request.user
 
 
-@router.post("/user/lookup", response=list[UserOutSchema], tags=["auth"])
-async def user_lookup(request: HttpRequest, user_ids: list[uuid.UUID]):
-    user_ids_ = frozenset(user_ids)
+@router.get("/user/lookup", response=list[UserOutSchema], tags=["auth"])
+async def user_lookup(request: HttpRequest, lookup_input: Query[UserLookupInSchema]):
+    user_ids_ = frozenset(lookup_input.user_ids)
     users = [u async for u in User.objects.filter(uuid__in=user_ids_)]
 
     if len(users) != len(user_ids_):
@@ -147,3 +148,10 @@ async def delete_user(request: HttpRequest, input_delete: UserDeleteInSchema):
     await asyncio.gather(django_alogout(request), user.adelete())
 
     return None
+
+
+@router.get("/csrf", tags=["auth"])
+@ensure_csrf_cookie
+@csrf_exempt
+async def get_csrf_token(request: HttpRequest):
+    return HttpResponse()

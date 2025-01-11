@@ -84,3 +84,7 @@ class UserAttributesInSchema(Schema):
 
 class UserDeleteInSchema(Schema):
     password: str
+
+
+class UserLookupInSchema(Schema):
+    user_ids: list[str] = Field(default_factory=list, alias="userIds")
