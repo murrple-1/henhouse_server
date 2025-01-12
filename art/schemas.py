@@ -92,10 +92,26 @@ class StoryOutSchema(ModelSchema):
 
 class StoryOutDetailsSchema(ModelSchema):
     createdAt: datetime.datetime = Field(alias="created_at")
+    publishedAt: datetime.datetime | None = Field(alias="published_at")
 
     class Meta:
         model = Story
         fields = ["uuid", "title", "synopsis", "creator", "tags"]
+
+    @staticmethod
+    def annotate_for_schema(qs: QuerySet[Story]) -> QuerySet[Story]:
+        return qs.annotate(
+            published_at=Subquery(
+                Chapter.objects.filter(story_id=OuterRef("uuid"))
+                .annotate(min_published_at=Min("published_at"))
+                .values("min_published_at")[:1]
+            )
+        )
+
+    @staticmethod
+    def setattr_for_schema(obj: Story) -> None:
+        if not hasattr(obj, "published_at"):
+            setattr(obj, "published_at", None)
 
 
 class ChapterInSchema(ModelSchema):

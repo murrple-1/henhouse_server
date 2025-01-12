@@ -72,11 +72,8 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
         self.assertIsInstance(json_, dict)
-        assert isinstance(json_, dict)
-        self.assertIn("createdAt", json_)
-        self.assertIsInstance(json_["createdAt"], str)
-        datetime.datetime.fromisoformat(json_["createdAt"])
-        json_.pop("createdAt")
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
         self.assertEqual(
             json_,
             {
@@ -101,11 +98,8 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         json_ = response.json()
         self.assertIsInstance(json_, dict)
-        assert isinstance(json_, dict)
-        self.assertIn("createdAt", json_)
-        self.assertIsInstance(json_["createdAt"], str)
-        datetime.datetime.fromisoformat(json_["createdAt"])
-        json_.pop("createdAt")
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        datetime.datetime.fromisoformat(json_.pop("publishedAt"))
         self.assertEqual(
             json_,
             {

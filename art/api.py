@@ -98,7 +98,9 @@ async def story_details(request: HttpRequest, story_id: uuid.UUID):
 
     try:
         return await (
-            Story.annotate_from_chapters(Story.objects.all())
+            StoryOutDetailsSchema.annotate_for_schema(
+                Story.annotate_from_chapters(Story.objects.all())
+            )
             .prefetch_related("tags")
             .filter(*filter_args)
             .aget(uuid=story_id)
