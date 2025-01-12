@@ -1,7 +1,8 @@
+import datetime
 from unittest.mock import Mock
 
 from django.http import HttpRequest
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from pydantic import ValidationError
 from django.db.models import Q, F
 
@@ -10,8 +11,11 @@ from art.schemas import (
     ChapterPatchInSchema,
     ListInSchema,
     StoryInSchema,
+    StoryOutSchema,
     StoryPatchInSchema,
 )
+from art.models import Chapter, Story
+from app_admin.models import User
 
 
 class SchemasTestCase(SimpleTestCase):
@@ -86,3 +90,48 @@ class SchemasTestCase(SimpleTestCase):
 
         with self.assertRaises(ValidationError):
             ChapterPatchInSchema(markdown="")
+
+    def test_StoryOutSchema_setattr_for_schema(self):
+        story = Story(title="Test Story", synopsis="Test Story Synopsis")
+        StoryOutSchema.setattr_for_schema(story)
+
+
+class SchemasDBTestCase(TestCase):
+    def test_StoryOutSchema_annotate_for_schema(self):
+        user = User.objects.create_user("user1", "test@test.com", None)
+
+        story = Story.objects.create(
+            title="Test Story", synopsis="Test Story Synopsis", creator=user
+        )
+
+        self.assertIsNone(
+            StoryOutSchema.annotate_for_schema(Story.objects.all())
+            .get(uuid=story.uuid)
+            .published_at
+        )
+
+        chapter = Chapter.objects.create(
+            story=story,
+            name="Chapter 1",
+            synopsis="",
+            index=0,
+            markdown="Chapter Text",
+            published_at=None,
+        )
+
+        self.assertIsNone(
+            StoryOutSchema.annotate_for_schema(Story.objects.all())
+            .get(uuid=story.uuid)
+            .published_at
+        )
+
+        chapter.published_at = datetime.datetime(
+            2000, 1, 1, 9, 0, tzinfo=datetime.timezone.utc
+        )
+        chapter.save(update_fields=("published_at",))
+
+        self.assertIsNotNone(
+            StoryOutSchema.annotate_for_schema(Story.objects.all())
+            .get(uuid=story.uuid)
+            .published_at
+        )

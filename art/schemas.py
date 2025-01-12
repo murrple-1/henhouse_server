@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, Self
 
-from django.db.models import OrderBy, Q
+from django.db.models import Min, OrderBy, Q, OuterRef, QuerySet, Subquery
 from django.http import HttpRequest
 from ninja import Field, ModelSchema, Schema
 from pydantic import model_validator
@@ -75,9 +75,19 @@ class StoryOutSchema(ModelSchema):
         fields = ["uuid", "title", "synopsis", "creator"]
 
     @staticmethod
-    def annotate_from_schema():
-        # TODO implement?
-        pass
+    def annotate_for_schema(qs: QuerySet[Story]) -> QuerySet[Story]:
+        return qs.annotate(
+            published_at=Subquery(
+                Chapter.objects.filter(story_id=OuterRef("uuid"))
+                .annotate(min_published_at=Min("published_at"))
+                .values("min_published_at")
+            )
+        )
+
+    @staticmethod
+    def setattr_for_schema(obj: Story) -> None:
+        if not hasattr(obj, "published_at"):
+            setattr(obj, "published_at", None)
 
 
 class StoryOutDetailsSchema(ModelSchema):

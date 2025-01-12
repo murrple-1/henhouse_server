@@ -281,3 +281,10 @@ class ApiTestCase(TestCase):
             user=user2,
         )
         self.assertEqual(response.status_code, 401, response.content)
+
+    async def test_get_csrf_token(self):
+        test_client = TestAsyncClient(router)
+
+        response = await test_client.get("/csrf")
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertIn("csrftoken", response._response.cookies)

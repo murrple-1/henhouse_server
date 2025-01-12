@@ -150,8 +150,8 @@ async def delete_user(request: HttpRequest, input_delete: UserDeleteInSchema):
     return None
 
 
-@router.get("/csrf", tags=["auth"])
+@router.get("/csrf", response={204: None}, tags=["auth"])
 @ensure_csrf_cookie
 @csrf_exempt
 async def get_csrf_token(request: HttpRequest):
-    return HttpResponse()
+    return HttpResponse(status=204)
