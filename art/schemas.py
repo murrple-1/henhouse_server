@@ -80,7 +80,7 @@ class StoryOutSchema(ModelSchema):
             published_at=Subquery(
                 Chapter.objects.filter(story_id=OuterRef("uuid"))
                 .annotate(min_published_at=Min("published_at"))
-                .values("min_published_at")
+                .values("min_published_at")[:1]
             )
         )
 
