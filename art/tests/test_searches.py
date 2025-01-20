@@ -5,11 +5,18 @@ from unittest.mock import Mock
 from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from app_admin.models import User
 from art import searches
 from art.models import Chapter, Story, Tag
+
+
+class CustomConvertToTestCase(SimpleTestCase):
+    def test_StrList(self):
+        self.assertEqual(searches.StrList.convertto(""), [""])
+        self.assertEqual(searches.StrList.convertto("test"), ["test"])
+        self.assertEqual(searches.StrList.convertto("test1,test2"), ["test1", "test2"])
 
 
 class AllSearchesTestCase(TestCase):
@@ -29,6 +36,7 @@ class AllSearchesTestCase(TestCase):
                 "storyText": ["test"],
                 "synopsis": ["test"],
                 "creator": [str(uuid.uuid4())],
+                "category": ["test", "test1,test2"],
             },
         },
         "chapter": {
@@ -50,7 +58,6 @@ class AllSearchesTestCase(TestCase):
                 "name_exact": ["test"],
                 "prettyName": ["test"],
                 "prettyName_exact": ["test"],
-                "description": ["test"],
             },
         },
     }

@@ -6,15 +6,17 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils import timezone
 
 from app_admin.models import User
-from art.models import Chapter, Story, Tag
+from art.models import Category, Chapter, Story, Tag
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("default_creator_username")
+        parser.add_argument("default_category")
 
     def handle(self, *args: Any, **options: Any) -> None:
         now = timezone.now()
+
         default_creator: User
         try:
             default_creator = User.objects.get(
@@ -25,6 +27,16 @@ class Command(BaseCommand):
 
         creators: dict[str, User] = {
             default_creator.username: default_creator,
+        }
+
+        default_category: Category
+        try:
+            default_category = Category.objects.get(name=options["default_category"])
+        except Category.DoesNotExist as e:
+            raise CommandError("default category not found") from e
+
+        categories: dict[str, Category] = {
+            default_category.name: default_category,
         }
 
         stories_json: list[dict[str, Any]] = json.load(sys.stdin)
@@ -50,6 +62,19 @@ class Command(BaseCommand):
             else:
                 creator = default_creator
 
+            category: Category | None
+            if (category_name := story_json.get("category")) is not None:
+                category = categories.get(category_name)
+                if category is None:
+                    try:
+                        category = Category.objects.get(name=category_name)
+                    except Category.DoesNotExist:
+                        category = default_category
+
+                    categories[category_name] = category
+            else:
+                category = default_category
+
             synopsis = story_json["synopsis"].strip()
             if len(synopsis) > 256:
                 new_synopsis = f"{synopsis[:255]}…"
@@ -62,6 +87,7 @@ class Command(BaseCommand):
                 title=story_json["title"],
                 synopsis=synopsis,
                 creator=creator,
+                category=category,
             )
             setattr(
                 story,

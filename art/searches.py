@@ -5,7 +5,14 @@ from django.db.models import Q
 from django.http import HttpRequest
 
 from art.models import Chapter
-from query_utils.search.convertto import UuidList
+from query_utils.search.convertto import UuidList, CustomConvertTo
+
+
+class StrList(CustomConvertTo):
+    @staticmethod
+    def convertto(search_obj: str) -> list[str]:
+        return search_obj.split(",")
+
 
 search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
     "story": {
@@ -14,6 +21,9 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
         "synopsis": lambda request, search_obj: Q(synopsis__icontains=search_obj),
         "creator": lambda request, search_obj: Q(
             creator_id__in=UuidList.convertto(search_obj)
+        ),
+        "category": lambda request, search_obj: Q(
+            category_id__in=StrList.convertto(search_obj)
         ),
     },
     "chapter": {
@@ -29,7 +39,6 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
         "prettyName_exact": lambda request, search_obj: Q(
             pretty_name__iexact=search_obj
         ),
-        "description": lambda request, search_obj: Q(description__iexact=search_obj),
     },
 }
 

@@ -839,7 +839,6 @@ class ApiTestCase(TestCase):
             {
                 "prettyName": tag.pretty_name,
                 "name": tag.name,
-                "description": tag.description,
             },
         )
 

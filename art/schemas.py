@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from ninja import Field, ModelSchema, Schema
 from pydantic import model_validator
 
-from art.models import Chapter, Story, Tag
+from art.models import Category, Chapter, Story, Tag
 from art.searches import search_fns
 from art.sorts import sort_configs
 from query_utils import search as searchutils
@@ -187,6 +187,20 @@ class ChapterOutDetailsSchema(ModelSchema):
         ]
 
 
+class CategoryOutSchema(ModelSchema):
+    class Meta:
+        model = Category
+        fields = ["name"]
+
+
+class CategoryOutDetailsSchema(ModelSchema):
+    prettyName: str = Field(alias="pretty_name")
+
+    class Meta:
+        model = Category
+        fields = ["name", "description"]
+
+
 class TagOutSchema(ModelSchema):
     class Meta:
         model = Tag
@@ -198,7 +212,7 @@ class TagOutDetailsSchema(ModelSchema):
 
     class Meta:
         model = Tag
-        fields = ["name", "description"]
+        fields = ["name"]
 
 
 class ListInSchema(Schema):

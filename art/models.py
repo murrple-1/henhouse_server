@@ -14,6 +14,9 @@ class Story(models.Model):
     )
     created_at = models.DateTimeField(default=timezone.now)
     is_nsfw = models.BooleanField(default=False)
+    category = models.ForeignKey(
+        "Category", related_name="stories", null=True, on_delete=models.PROTECT
+    )
     tags = models.ManyToManyField("Tag", related_name="stories", blank=True)
     favorites_of = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="favorite_stories", blank=True
@@ -79,10 +82,18 @@ class Chapter(models.Model):
         return qs
 
 
-class Tag(models.Model):
+class Category(models.Model):
     name = models.CharField(primary_key=True, max_length=128, blank=False)
     pretty_name = models.CharField(max_length=128, blank=False)
     description = models.TextField(default="", blank=True)
+
+    def __str__(self) -> str:
+        return f"Category: {self.pretty_name} ({self.name})"
+
+
+class Tag(models.Model):
+    name = models.CharField(primary_key=True, max_length=128, blank=False)
+    pretty_name = models.CharField(max_length=128, blank=False)
 
     def __str__(self) -> str:
         return f"Tag: {self.pretty_name} ({self.name})"
