@@ -13,7 +13,8 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
         "synopsis": SortConfig([standard_sort("synopsis")], None),
     },
     "category": {
-        "name": SortConfig([standard_sort("name")], DefaultDescriptor(0, "ASC")),
+        "sortKey": SortConfig([standard_sort("sort_key")], DefaultDescriptor(0, "ASC")),
+        "name": SortConfig([standard_sort("name")], None),
         "prettyName": SortConfig([standard_sort("pretty_name")], None),
     },
     "tag": {

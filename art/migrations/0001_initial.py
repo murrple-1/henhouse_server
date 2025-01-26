@@ -24,6 +24,7 @@ class Migration(migrations.Migration):
                 ),
                 ("pretty_name", models.CharField(max_length=128)),
                 ("description", models.TextField(blank=True, default="")),
+                ("sort_key", models.PositiveIntegerField()),
             ],
         ),
         migrations.CreateModel(
@@ -182,6 +183,12 @@ class Migration(migrations.Migration):
             model_name="chapter",
             constraint=models.UniqueConstraint(
                 fields=("story", "index"), name="chapter__unique__story__index"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="category",
+            index=models.Index(
+                fields=["sort_key"], name="art_categor_sort_ke_7e2aa8_idx"
             ),
         ),
     ]
