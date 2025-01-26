@@ -15,7 +15,7 @@ from art.schemas import (
     StoryOutSchema,
     StoryPatchInSchema,
 )
-from art.models import Chapter, Story
+from art.models import Category, Chapter, Story
 from app_admin.models import User
 
 
@@ -55,18 +55,26 @@ class SchemasTestCase(SimpleTestCase):
         self.assertTrue(list_schema.default_sort_enabled)
 
     def test_StoryInSchema(self):
-        StoryInSchema(title="Title", synopsis="Synopsis", tags=[])
-        StoryInSchema(title="Title", synopsis="Synopsis", tags=["tag"])
+        StoryInSchema(title="Title", synopsis="Synopsis", category="category", tags=[])
+        StoryInSchema(
+            title="Title", synopsis="Synopsis", category="category", tags=["tag"]
+        )
 
         with self.assertRaises(ValidationError):
-            StoryInSchema(title="", synopsis="Synopsis", tags=["tag"])
+            StoryInSchema(
+                title="", synopsis="Synopsis", category="category", tags=["tag"]
+            )
 
         with self.assertRaises(ValidationError):
-            StoryInSchema(title="Title", synopsis="", tags=["tag"])
+            StoryInSchema(title="Title", synopsis="", category="category", tags=["tag"])
 
     def test_StoryPatchInSchema(self):
-        StoryPatchInSchema(title="Title", synopsis="Synopsis", tags=[])
-        StoryPatchInSchema(title="Title", synopsis="Synopsis", tags=["tag"])
+        StoryPatchInSchema(
+            title="Title", synopsis="Synopsis", category="category", tags=[]
+        )
+        StoryPatchInSchema(
+            title="Title", synopsis="Synopsis", category="category", tags=["tag"]
+        )
 
         with self.assertRaises(ValidationError):
             StoryPatchInSchema(title="")
@@ -93,11 +101,11 @@ class SchemasTestCase(SimpleTestCase):
             ChapterPatchInSchema(markdown="")
 
     def test_StoryOutSchema_setattr_for_schema(self):
-        story = Story(title="Test Story", synopsis="Test Story Synopsis")
+        story = Story()
         StoryOutSchema.setattr_for_schema(story)
 
     def test_StoryOutDetailsSchema_setattr_for_schema(self):
-        story = Story(title="Test Story", synopsis="Test Story Synopsis")
+        story = Story()
         StoryOutDetailsSchema.setattr_for_schema(story)
 
 
@@ -105,8 +113,15 @@ class SchemasDBTestCase(TestCase):
     def test_StoryOutSchema_annotate_for_schema(self):
         user = User.objects.create_user("user1", "test@test.com", None)
 
+        category = Category.objects.create(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = Story.objects.create(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         self.assertIsNone(
@@ -144,8 +159,15 @@ class SchemasDBTestCase(TestCase):
     def test_StoryOutDetailsSchema_annotate_for_schema(self):
         user = User.objects.create_user("user1", "test@test.com", None)
 
+        category = Category.objects.create(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = Story.objects.create(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         self.assertIsNone(

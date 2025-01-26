@@ -116,21 +116,33 @@ async def create_story(request: HttpRequest, input_story: StoryInSchema):
     user = request.user
     assert isinstance(user, AbstractBaseUser)
 
+    category: Category
+    try:
+        category = await Category.objects.aget(name=input_story.category)
+    except Category.DoesNotExist:
+        raise Http404
+
     tag_uuids = frozenset(input_story.tags)
     tags: list[Tag] = [t async for t in Tag.objects.filter(name__in=tag_uuids)]
     if len(tag_uuids) != len(tags):
         raise Http404
 
-    return await _create_story_transaction(user, input_story, tags)
+    return await _create_story_transaction(user, input_story, category, tags)
 
 
 @sync_to_async
 def _create_story_transaction(
-    user: AbstractBaseUser, input_story: StoryInSchema, tags: list[Tag]
+    user: AbstractBaseUser,
+    input_story: StoryInSchema,
+    category: Category,
+    tags: list[Tag],
 ) -> Story:
     with transaction.atomic():
         story = Story.objects.create(
-            creator=user, title=input_story.title, synopsis=input_story.synopsis
+            creator=user,
+            title=input_story.title,
+            synopsis=input_story.synopsis,
+            category=category,
         )
         story.tags.set(tags)
         StoryOutSchema.setattr_for_schema(story)
@@ -163,6 +175,16 @@ async def patch_story(
     if input_story.synopsis is not None:
         story.synopsis = input_story.synopsis
         update_fields.add("synopsis")
+
+    if input_story.category is not None:
+        category: Category
+        try:
+            category = await Category.objects.aget(name=input_story.category)
+        except Category.DoesNotExist:
+            raise Http404
+
+        story.category = category
+        update_fields.add("category")
 
     tags: Iterable[Tag] | None = None
     if input_story.tags is not None:

@@ -15,7 +15,7 @@ class Story(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     is_nsfw = models.BooleanField(default=False)
     category = models.ForeignKey(
-        "Category", related_name="stories", null=True, on_delete=models.PROTECT
+        "Category", related_name="stories", on_delete=models.PROTECT
     )
     tags = models.ManyToManyField("Tag", related_name="stories", blank=True)
     favorites_of = models.ManyToManyField(

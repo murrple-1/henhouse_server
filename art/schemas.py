@@ -14,6 +14,8 @@ from query_utils import sort as sortutils
 
 
 class StoryInSchema(ModelSchema):
+    category: str
+
     class Meta:
         model = Story
         fields = ["title", "synopsis", "tags"]
@@ -38,6 +40,7 @@ class StoryInSchema(ModelSchema):
 
 
 class StoryPatchInSchema(ModelSchema):
+    category: Optional[str] = None
     published: Optional[bool] = None
 
     class Meta:
@@ -67,6 +70,7 @@ class StoryPatchInSchema(ModelSchema):
 
 
 class StoryOutSchema(ModelSchema):
+    category: str = Field(alias="category_id")
     createdAt: datetime.datetime = Field(alias="created_at")
     publishedAt: datetime.datetime | None = Field(alias="published_at")
 
@@ -91,6 +95,7 @@ class StoryOutSchema(ModelSchema):
 
 
 class StoryOutDetailsSchema(ModelSchema):
+    category: str = Field(alias="category_id")
     createdAt: datetime.datetime = Field(alias="created_at")
     publishedAt: datetime.datetime | None = Field(alias="published_at")
 

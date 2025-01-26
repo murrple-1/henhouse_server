@@ -107,7 +107,6 @@ class Migration(migrations.Migration):
                 (
                     "category",
                     models.ForeignKey(
-                        null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="stories",
                         to="art.category",

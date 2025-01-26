@@ -26,8 +26,15 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"items": [], "count": 0})
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.get("/story")
@@ -61,8 +68,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.get(f"/story/{story.uuid}")
@@ -82,6 +96,7 @@ class ApiTestCase(TestCase):
                 "uuid": str(story.uuid),
                 "tags": [],
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
 
@@ -108,6 +123,7 @@ class ApiTestCase(TestCase):
                 "uuid": str(story.uuid),
                 "tags": [],
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
 
@@ -116,11 +132,16 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         response = await test_client.post(
             "/story",
             json={
                 "title": "Test Story 1",
                 "synopsis": "Test Story 1 Synopsis",
+                "category": category.name,
                 "tags": [],
             },
             user=user,
@@ -135,6 +156,7 @@ class ApiTestCase(TestCase):
             {
                 "title": "Test Story 1",
                 "synopsis": "Test Story 1 Synopsis",
+                "category": category.name,
                 "creator": str(user.uuid),
             },
         )
@@ -145,6 +167,7 @@ class ApiTestCase(TestCase):
             json={
                 "title": "Test Story 2",
                 "synopsis": "Test Story 2 Synopsis",
+                "category": category.name,
                 "tags": [str(tag.name)],
             },
             user=user,
@@ -159,11 +182,12 @@ class ApiTestCase(TestCase):
             {
                 "title": "Test Story 2",
                 "synopsis": "Test Story 2 Synopsis",
+                "category": category.name,
                 "creator": str(user.uuid),
             },
         )
 
-    async def test_create_story_tagsnotfound(self):
+    async def test_create_story_categorynotfound(self):
         test_client = TestAsyncClient(router)
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
@@ -173,6 +197,28 @@ class ApiTestCase(TestCase):
             json={
                 "title": "Test Story",
                 "synopsis": "Test Story Synopsis",
+                "category": "notfound",
+                "tags": [],
+            },
+            user=user,
+        )
+        self.assertEqual(response.status_code, 404, response.content)
+
+    async def test_create_story_tagsnotfound(self):
+        test_client = TestAsyncClient(router)
+
+        user = await User.objects.acreate_user("user1", "test@test.com", None)
+
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
+        response = await test_client.post(
+            "/story",
+            json={
+                "title": "Test Story",
+                "synopsis": "Test Story Synopsis",
+                "category": category.name,
                 "tags": ["notfound"],
             },
             user=user,
@@ -184,8 +230,19 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         response = await test_client.post(
-            "/story", json={"title": "", "synopsis": "Synopsis", "tags": []}, user=user
+            "/story",
+            json={
+                "title": "",
+                "synopsis": "Synopsis",
+                "category": category.name,
+                "tags": [],
+            },
+            user=user,
         )
         self.assertEqual(response.status_code, 422, response.content)
 
@@ -194,8 +251,18 @@ class ApiTestCase(TestCase):
 
         await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         response = await test_client.post(
-            "/story", json={"title": "Test Story", "tags": []}
+            "/story",
+            json={
+                "title": "Test Story",
+                "synopsis": "Synopsis",
+                "category": category.name,
+                "tags": [],
+            },
         )
         self.assertEqual(response.status_code, 401, response.content)
 
@@ -204,8 +271,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.patch(f"/story/{story.uuid}", json={}, user=user)
@@ -220,11 +294,13 @@ class ApiTestCase(TestCase):
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
-        await story.arefresh_from_db(fields=("title", "synopsis"))
+        await story.arefresh_from_db(fields=("title", "synopsis", "category_id"))
         self.assertEqual(story.title, "Test Story")
         self.assertEqual(story.synopsis, "Test Story Synopsis")
+        self.assertEqual(story.category_id, category.name)
         self.assertEqual(await story.tags.acount(), 0)
 
         response = await test_client.patch(
@@ -241,11 +317,13 @@ class ApiTestCase(TestCase):
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
-        await story.arefresh_from_db(fields=("title", "synopsis"))
+        await story.arefresh_from_db(fields=("title", "synopsis", "category_id"))
         self.assertEqual(story.title, "New Story Title")
         self.assertEqual(story.synopsis, "Test Story Synopsis")
+        self.assertEqual(story.category_id, category.name)
         self.assertEqual(await story.tags.acount(), 0)
 
         tag = await Tag.objects.acreate(name="test", pretty_name="Test")
@@ -263,11 +341,13 @@ class ApiTestCase(TestCase):
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
-        await story.arefresh_from_db(fields=("title", "synopsis"))
+        await story.arefresh_from_db(fields=("title", "synopsis", "category_id"))
         self.assertEqual(story.title, "New Story Title")
         self.assertEqual(story.synopsis, "Test Story Synopsis")
+        self.assertEqual(story.category_id, category.name)
         self.assertEqual(await story.tags.acount(), 1)
 
         response = await test_client.patch(
@@ -284,11 +364,40 @@ class ApiTestCase(TestCase):
                 "synopsis": "New Story Synopsis",
                 "uuid": str(story.uuid),
                 "creator": str(user.uuid),
+                "category": category.name,
             },
         )
-        await story.arefresh_from_db(fields=("title", "synopsis"))
+        await story.arefresh_from_db(fields=("title", "synopsis", "category_id"))
         self.assertEqual(story.title, "New Story Title")
         self.assertEqual(story.synopsis, "New Story Synopsis")
+        self.assertEqual(story.category_id, category.name)
+        self.assertEqual(await story.tags.acount(), 1)
+
+        new_category = await Category.objects.acreate(
+            name="test2", pretty_name="Test2", description="Description 2", sort_key=1
+        )
+
+        response = await test_client.patch(
+            f"/story/{story.uuid}", json={"category": new_category.name}, user=user
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        json_ = response.json()
+        datetime.datetime.fromisoformat(json_.pop("createdAt"))
+        self.assertIsNone(json_.pop("publishedAt"))
+        self.assertEqual(
+            json_,
+            {
+                "title": "New Story Title",
+                "synopsis": "New Story Synopsis",
+                "uuid": str(story.uuid),
+                "creator": str(user.uuid),
+                "category": new_category.name,
+            },
+        )
+        await story.arefresh_from_db(fields=("title", "synopsis", "category_id"))
+        self.assertEqual(story.title, "New Story Title")
+        self.assertEqual(story.synopsis, "New Story Synopsis")
+        self.assertEqual(story.category_id, new_category.name)
         self.assertEqual(await story.tags.acount(), 1)
 
     async def test_patch_story_storynotfound(self):
@@ -301,13 +410,41 @@ class ApiTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 404, response.content)
 
-    async def test_patch_story_tagnotfound(self):
+    async def test_patch_story_categorynotfound(self):
         test_client = TestAsyncClient(router)
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
+        )
+
+        response = await test_client.patch(
+            f"/story/{story.uuid}", json={"category": "notfound"}, user=user
+        )
+        self.assertEqual(response.status_code, 404, response.content)
+
+    async def test_patch_story_tagsnotfound(self):
+        test_client = TestAsyncClient(router)
+
+        user = await User.objects.acreate_user("user1", "test@test.com", None)
+
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
+        story = await Story.objects.acreate(
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.patch(
@@ -320,8 +457,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.patch(f"/story/{story.uuid}", json={})
@@ -332,8 +476,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.delete(f"/story/{story.uuid}", user=user)
@@ -352,8 +503,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.delete(f"/story/{story.uuid}")
@@ -368,8 +526,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         def assert_empty_response(response: NinjaResponse):
@@ -471,8 +636,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         chapter1 = await Chapter.objects.acreate(
@@ -546,8 +718,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.post(
@@ -577,8 +756,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         response = await test_client.post(
@@ -601,8 +787,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         input_json = {
@@ -625,8 +818,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         chapter = await Chapter.objects.acreate(
@@ -740,8 +940,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         chapter = await Chapter.objects.acreate(
@@ -768,8 +975,15 @@ class ApiTestCase(TestCase):
 
         user = await User.objects.acreate_user("user1", "test@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         chapter = await Chapter.objects.acreate(
@@ -790,8 +1004,15 @@ class ApiTestCase(TestCase):
         user = await User.objects.acreate_user("user1", "test@test.com", None)
         alt_user = await User.objects.acreate_user("user2", "test2@test.com", None)
 
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
         story = await Story.objects.acreate(
-            title="Test Story", synopsis="Test Story Synopsis", creator=user
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
         )
 
         chapter = await Chapter.objects.acreate(
@@ -822,7 +1043,7 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.json(), {"count": 0, "items": []})
 
         await Category.objects.acreate(
-            name="test", pretty_name="Test", description="Description"
+            name="test", pretty_name="Test", description="Description", sort_key=0
         )
 
         response = await test_client.get("/category")
@@ -833,7 +1054,7 @@ class ApiTestCase(TestCase):
         test_client = TestAsyncClient(router)
 
         category = await Category.objects.acreate(
-            name="test", pretty_name="Test", description="Description"
+            name="test", pretty_name="Test", description="Description", sort_key=0
         )
 
         response = await test_client.get(f"/category/{category.name}")
