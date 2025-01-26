@@ -9,7 +9,7 @@ from django.test import SimpleTestCase, TestCase
 
 from app_admin.models import User
 from art import searches
-from art.models import Chapter, Story, Tag
+from art.models import Category, Chapter, Story, Tag
 
 
 class CustomConvertToTestCase(SimpleTestCase):
@@ -49,6 +49,15 @@ class AllSearchesTestCase(TestCase):
                 "name_exact": ["test"],
                 "text": ["test"],
                 "synopsis": ["test"],
+            },
+        },
+        "category": {
+            "get_queryset": lambda: Category.objects.all(),
+            "searches": {
+                "name": ["test"],
+                "name_exact": ["test"],
+                "prettyName": ["test"],
+                "prettyName_exact": ["test"],
             },
         },
         "tag": {

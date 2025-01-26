@@ -188,6 +188,8 @@ class ChapterOutDetailsSchema(ModelSchema):
 
 
 class CategoryOutSchema(ModelSchema):
+    prettyName: str = Field(alias="pretty_name")
+
     class Meta:
         model = Category
         fields = ["name"]
@@ -202,6 +204,8 @@ class CategoryOutDetailsSchema(ModelSchema):
 
 
 class TagOutSchema(ModelSchema):
+    prettyName: str = Field(alias="pretty_name")
+
     class Meta:
         model = Tag
         fields = ["name"]

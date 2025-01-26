@@ -32,6 +32,14 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
         "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
         "synopsis": lambda request, search_obj: Q(synopsis__icontains=search_obj),
     },
+    "category": {
+        "name": lambda request, search_obj: Q(name__icontains=search_obj),
+        "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),
+        "prettyName": lambda request, search_obj: Q(pretty_name__icontains=search_obj),
+        "prettyName_exact": lambda request, search_obj: Q(
+            pretty_name__iexact=search_obj
+        ),
+    },
     "tag": {
         "name": lambda request, search_obj: Q(name__icontains=search_obj),
         "name_exact": lambda request, search_obj: Q(name__iexact=search_obj),

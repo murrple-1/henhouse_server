@@ -12,8 +12,12 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
         "name": SortConfig([standard_sort("name")], None),
         "synopsis": SortConfig([standard_sort("synopsis")], None),
     },
+    "category": {
+        "name": SortConfig([standard_sort("name")], DefaultDescriptor(0, "ASC")),
+        "prettyName": SortConfig([standard_sort("pretty_name")], None),
+    },
     "tag": {
-        "name": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
+        "name": SortConfig([standard_sort("name")], DefaultDescriptor(0, "ASC")),
         "prettyName": SortConfig([standard_sort("pretty_name")], None),
     },
 }

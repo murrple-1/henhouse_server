@@ -11,8 +11,10 @@ from ninja import Query
 from ninja.pagination import RouterPaginated
 
 from app_admin.security import auth_optional, must_auth
-from art.models import Chapter, Story, Tag
+from art.models import Category, Chapter, Story, Tag
 from art.schemas import (
+    CategoryOutDetailsSchema,
+    CategoryOutSchema,
     ChapterInSchema,
     ChapterOutDetailsSchema,
     ChapterOutSchema,
@@ -369,6 +371,48 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
         raise Http404
 
     return None
+
+
+if _async_pagination_works:  # pragma: no cover
+
+    @router.get(
+        "/category",
+        response=list[CategoryOutSchema],
+        auth=auth_optional,
+        tags=["category"],
+    )
+    async def list_categories(request: HttpRequest, list_params: Query[ListInSchema]):
+        filter_args: list[Q] = list_params.get_filter_args("category", request)
+        return Category.objects.filter(*filter_args).order_by(
+            *list_params.get_order_by_args("category")
+        )
+
+else:  # pragma: no cover
+
+    @router.get(
+        "/category",
+        response=list[CategoryOutSchema],
+        auth=auth_optional,
+        tags=["category"],
+    )
+    def list_category(request: HttpRequest, list_params: Query[ListInSchema]):
+        filter_args: list[Q] = list_params.get_filter_args("category", request)
+        return Category.objects.filter(*filter_args).order_by(
+            *list_params.get_order_by_args("category")
+        )
+
+
+@router.get(
+    "/category/{category_name}",
+    response=CategoryOutDetailsSchema,
+    auth=auth_optional,
+    tags=["category"],
+)
+async def category_details(request: HttpRequest, category_name: str):
+    try:
+        return await Category.objects.aget(name=category_name)
+    except Category.DoesNotExist:
+        raise Http404
 
 
 if _async_pagination_works:  # pragma: no cover

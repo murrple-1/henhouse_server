@@ -9,7 +9,7 @@ from ninja.testing.client import NinjaResponse
 
 from app_admin.models import User
 from art.api import router
-from art.models import Chapter, Story, Tag
+from art.models import Category, Chapter, Story, Tag
 
 
 class ApiTestCase(TestCase):
@@ -809,6 +809,48 @@ class ApiTestCase(TestCase):
         response = await test_client.delete(
             f"/chapter/{uuid.UUID(int=0)}", user=alt_user
         )
+        self.assertEqual(response.status_code, 404, response.content)
+
+    @unittest.skip(
+        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
+    )
+    async def test_list_categories(self):
+        test_client = TestAsyncClient(router)
+
+        response = await test_client.get("/category")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), {"count": 0, "items": []})
+
+        await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description"
+        )
+
+        response = await test_client.get("/category")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), {"count": 1, "items": []})
+
+    async def test_category_details(self):
+        test_client = TestAsyncClient(router)
+
+        category = await Category.objects.acreate(
+            name="test", pretty_name="Test", description="Description"
+        )
+
+        response = await test_client.get(f"/category/{category.name}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(
+            response.json(),
+            {
+                "prettyName": category.pretty_name,
+                "name": category.name,
+                "description": "Description",
+            },
+        )
+
+    async def test_category_details_notfound(self):
+        test_client = TestAsyncClient(router)
+
+        response = await test_client.get("/category/notfound")
         self.assertEqual(response.status_code, 404, response.content)
 
     @unittest.skip(
