@@ -16,7 +16,17 @@ class TestAsyncClient(TestAsyncClient_):
         self, method: str, path: str, data: Dict, request_params: Any
     ) -> Mock:
         request = super()._build_request(method, path, data, request_params)
+
         request.session = SessionStore()
+
+        if hasattr(request, "user") and not hasattr(request, "auser"):
+            user = request.user
+
+            async def auser():
+                return user
+
+            request.auser = auser
+
         return request
 
 

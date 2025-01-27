@@ -39,7 +39,7 @@ if _async_pagination_works:  # pragma: no cover
         "/story", response=list[StoryOutSchema], auth=auth_optional, tags=["story"]
     )
     async def list_stories(request: HttpRequest, list_params: Query[ListInSchema]):
-        user = request.user
+        user = await request.auser()
         filter_args: list[Q]
         if user.is_authenticated:
             filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
@@ -91,7 +91,7 @@ else:  # pragma: no cover
     tags=["story"],
 )
 async def story_details(request: HttpRequest, story_id: uuid.UUID):
-    user = request.user
+    user = await request.auser()
     filter_args: list[Q]
     if user.is_authenticated:
         filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
@@ -113,7 +113,7 @@ async def story_details(request: HttpRequest, story_id: uuid.UUID):
 
 @router.post("/story", response=StoryOutSchema, auth=must_auth, tags=["story"])
 async def create_story(request: HttpRequest, input_story: StoryInSchema):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
 
     category: Category
@@ -156,7 +156,7 @@ def _create_story_transaction(
 async def patch_story(
     request: HttpRequest, story_id: uuid.UUID, input_story: StoryPatchInSchema
 ):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
 
     try:
@@ -213,7 +213,7 @@ def _patch_story_transaction(
     "/story/{story_id}", response={204: None}, auth=must_auth, tags=["story"]
 )
 async def delete_story(request: HttpRequest, story_id: uuid.UUID):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
     count, _ = await Story.objects.filter(creator=user, uuid=story_id).adelete()
     if not count:
@@ -231,7 +231,7 @@ if _async_pagination_works:  # pragma: no cover
         tags=["chapter"],
     )
     async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
-        user = request.user
+        user = await request.auser()
         filter_args: list[Q]
         if user.is_authenticated:
             filter_args = [(Q(creator=user) | Q(published_at__isnull=False))]
@@ -298,7 +298,7 @@ else:  # pragma: no cover
     tags=["chapter"],
 )
 async def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
-    user = request.user
+    user = await request.auser()
 
     accessible_chapters: QuerySet[Chapter]
     if user.is_authenticated:
@@ -323,7 +323,7 @@ async def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
 async def create_chapter(
     request: HttpRequest, story_id: uuid.UUID, input_chapter: ChapterInSchema
 ):
-    user = request.user
+    user = await request.auser()
 
     try:
         story = await Story.objects.aget(creator=user, uuid=story_id)
@@ -353,7 +353,7 @@ async def create_chapter(
 async def patch_chapter(
     request: HttpRequest, chapter_id: uuid.UUID, input_chapter: ChapterPatchInSchema
 ):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
 
     try:
@@ -384,7 +384,7 @@ async def patch_chapter(
     "/chapter/{chapter_id}", response={204: None}, auth=must_auth, tags=["chapter"]
 )
 async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
     count, _ = await Chapter.objects.filter(
         story__creator=user, uuid=chapter_id

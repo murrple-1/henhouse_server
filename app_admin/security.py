@@ -30,6 +30,12 @@ _load_global_settings()
 def anonymous_fallback(request: HttpRequest):
     user = AnonymousUser()
     request.user = user
+
+    async def auser():
+        return user
+
+    request.auser = auser
+
     return user
 
 
@@ -42,6 +48,11 @@ class HttpBasicAuth(_HttpBasicAuth):
             user.last_login = timezone.now()
             user.save(update_fields=("last_login",))
             request.user = user
+
+            async def auser():
+                return user
+
+            request.auser = auser
         return user
 
 
@@ -74,6 +85,12 @@ class HttpBearer(_HttpBearer):
         user.last_login = timezone.now()
         user.save(update_fields=("last_login",))
         request.user = user
+
+        async def auser():
+            return user
+
+        request.auser = auser
+
         return token_obj
 
 

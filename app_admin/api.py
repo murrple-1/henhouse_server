@@ -76,7 +76,7 @@ async def logout(request: HttpRequest):
 async def change_password(
     request: HttpRequest, input_change_password: ChangePasswordInSchema
 ):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
 
     user.set_password(input_change_password.password)
@@ -99,7 +99,7 @@ async def password_reset_confirm(request: HttpRequest):
 
 @router.get("/user", response=UserDetailsOutSchema, auth=must_auth, tags=["auth"])
 async def user_details(request: HttpRequest):
-    return request.user
+    return await request.auser()
 
 
 @router.get("/user/lookup", response=list[UserOutSchema], tags=["auth"])
@@ -117,7 +117,7 @@ async def user_lookup(request: HttpRequest, lookup_input: Query[UserLookupInSche
 async def update_user_attributes(
     request: HttpRequest, input_attributes: UserAttributesInSchema
 ):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, User)
 
     user.attributes.update(input_attributes.attributes)
@@ -136,7 +136,7 @@ async def update_user_attributes(
 
 @router.delete("/user", response={204: None}, auth=must_auth, tags=["auth"])
 async def delete_user(request: HttpRequest, input_delete: UserDeleteInSchema):
-    user = request.user
+    user = await request.auser()
     assert isinstance(user, User)
 
     user_ = await django_aauthenticate(

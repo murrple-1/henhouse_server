@@ -1,15 +1,37 @@
 import datetime
+from typing import Any, Dict
 import unittest
 import uuid
+from unittest.mock import Mock
 
 from django.test import TestCase
 from django.utils import timezone
-from ninja.testing import TestAsyncClient
+from ninja.testing import TestAsyncClient as TestAsyncClient_
 from ninja.testing.client import NinjaResponse
+from django.contrib.sessions.backends.cache import SessionStore
 
 from app_admin.models import User
 from art.api import router
 from art.models import Category, Chapter, Story, Tag
+
+
+class TestAsyncClient(TestAsyncClient_):
+    def _build_request(
+        self, method: str, path: str, data: Dict, request_params: Any
+    ) -> Mock:
+        request = super()._build_request(method, path, data, request_params)
+
+        request.session = SessionStore()
+
+        if hasattr(request, "user") and not hasattr(request, "auser"):
+            user = request.user
+
+            async def auser():
+                return user
+
+            request.auser = auser
+
+        return request
 
 
 class ApiTestCase(TestCase):
