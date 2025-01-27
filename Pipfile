@@ -17,6 +17,7 @@ python-redis-lock = {version = "*", extras = ["django"]}
 pyparsing = "*"
 python-dateutil = "*"
 email-validator = "*"
+django-admin-sortable2 = "*"
 
 [dev-packages]
 coverage = "*"

@@ -1,6 +1,7 @@
 from django.contrib import admin
+from adminsortable2.admin import SortableAdminMixin
 
-from art.models import Chapter, ChapterReport, Story, StoryReport, Tag
+from art.models import Chapter, ChapterReport, Story, StoryReport, Tag, Category
 
 
 class ChaptersInline(admin.TabularInline):
@@ -15,6 +16,11 @@ class StoryAdmin(admin.ModelAdmin):
     ordering = ["title"]
     search_fields = ["title", "creator__email"]
     inlines = [ChaptersInline]
+
+
+@admin.register(Category)
+class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["sort_key", "pretty_name", "name"]
 
 
 @admin.register(Tag)

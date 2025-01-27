@@ -24,8 +24,9 @@ class Migration(migrations.Migration):
                 ),
                 ("pretty_name", models.CharField(max_length=128)),
                 ("description", models.TextField(blank=True, default="")),
-                ("sort_key", models.PositiveIntegerField()),
+                ("sort_key", models.PositiveIntegerField(default=0)),
             ],
+            options={"ordering": ("sort_key",)},
         ),
         migrations.CreateModel(
             name="Chapter",

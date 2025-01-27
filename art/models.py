@@ -85,11 +85,12 @@ class Chapter(models.Model):
 class Category(models.Model):
     class Meta:
         indexes = (models.Index(fields=("sort_key",)),)
+        ordering = ("sort_key",)
 
     name = models.CharField(primary_key=True, max_length=128, blank=False)
     pretty_name = models.CharField(max_length=128, blank=False)
     description = models.TextField(default="", blank=True)
-    sort_key = models.PositiveIntegerField()
+    sort_key = models.PositiveIntegerField(default=0)
 
     def __str__(self) -> str:
         return f"Category: {self.pretty_name} ({self.name})"

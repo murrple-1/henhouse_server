@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "ninja",
     "corsheaders",
     "silk",
+    "adminsortable2",
     "app_admin.apps.AppAdminConfig",
     "art.apps.ArtConfig",
 ]

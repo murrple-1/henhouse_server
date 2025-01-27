@@ -197,7 +197,7 @@ class CategoryOutSchema(ModelSchema):
 
     class Meta:
         model = Category
-        fields = ["name"]
+        fields = ["name", "description"]
 
 
 class CategoryOutDetailsSchema(ModelSchema):
