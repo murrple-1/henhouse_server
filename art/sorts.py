@@ -11,6 +11,8 @@ sort_configs: dict[str, dict[str, SortConfig]] = {
         "uuid": SortConfig([standard_sort("uuid")], DefaultDescriptor(0, "ASC")),
         "name": SortConfig([standard_sort("name")], None),
         "synopsis": SortConfig([standard_sort("synopsis")], None),
+        "createdAt": SortConfig([standard_sort("created_at")], None),
+        "publishedAt": SortConfig([standard_sort("published_at")], None),
     },
     "category": {
         "sortKey": SortConfig([standard_sort("sort_key")], DefaultDescriptor(0, "ASC")),

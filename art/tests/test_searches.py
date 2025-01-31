@@ -6,6 +6,7 @@ from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
 from django.http import HttpRequest
 from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 
 from app_admin.models import User
 from art import searches
@@ -37,6 +38,13 @@ class AllSearchesTestCase(TestCase):
                 "synopsis": ["test"],
                 "creator": [str(uuid.uuid4())],
                 "category": ["test", "test1,test2"],
+                "createdAt": ["2018-11-23 00:00:00+0000|2018-11-26 00:00:00+0000"],
+                "createdAt_exact": ["2018-11-26 00:00:00+0000"],
+                "createdAt_delta": ["older_than:10h"],
+                "publishedAt": ["2018-11-23 00:00:00+0000|2018-11-26 00:00:00+0000"],
+                "publishedAt_exact": ["2018-11-26 00:00:00+0000"],
+                "publishedAt_delta": ["older_than:10h"],
+                "isPublished": ["true", "false"],
             },
         },
         "chapter": {
@@ -45,10 +53,18 @@ class AllSearchesTestCase(TestCase):
             ),
             "searches": {
                 "uuid": [str(uuid.uuid4())],
+                "story": [str(uuid.uuid4())],
                 "name": ["test"],
                 "name_exact": ["test"],
                 "text": ["test"],
                 "synopsis": ["test"],
+                "createdAt": ["2018-11-23 00:00:00+0000|2018-11-26 00:00:00+0000"],
+                "createdAt_exact": ["2018-11-26 00:00:00+0000"],
+                "createdAt_delta": ["older_than:10h"],
+                "publishedAt": ["2018-11-23 00:00:00+0000|2018-11-26 00:00:00+0000"],
+                "publishedAt_exact": ["2018-11-26 00:00:00+0000"],
+                "publishedAt_delta": ["older_than:10h"],
+                "isPublished": ["true", "false"],
             },
         },
         "category": {
@@ -104,3 +120,70 @@ class AllSearchesTestCase(TestCase):
                             result = list(queryset.filter(q))
 
                             self.assertIsNotNone(result)
+
+
+class SearchesTestCase(TestCase):
+    def test_story_isPublished(self):
+        user = User.objects.create_user("user1", "test@test.com", None)
+
+        category = Category.objects.create(
+            name="test", pretty_name="Test", description="Description", sort_key=0
+        )
+
+        story = Story.objects.create(
+            title="Test Story",
+            synopsis="Test Story Synopsis",
+            creator=user,
+            category=category,
+        )
+
+        self.assertEqual(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "true")
+            ).count(),
+            0,
+        )
+        self.assertGreater(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "false")
+            ).count(),
+            0,
+        )
+
+        chapter = Chapter.objects.create(
+            story=story,
+            name="Chapter 1",
+            synopsis="",
+            index=0,
+            markdown="Chapter Text",
+            published_at=None,
+        )
+
+        self.assertEqual(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "true")
+            ).count(),
+            0,
+        )
+        self.assertGreater(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "false")
+            ).count(),
+            0,
+        )
+
+        chapter.published_at = timezone.now()
+        chapter.save(update_fields=("published_at",))
+
+        self.assertGreater(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "true")
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            Story.objects.filter(
+                searches._story_isPublished(Mock(HttpRequest), "false")
+            ).count(),
+            0,
+        )
