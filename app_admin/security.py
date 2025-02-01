@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth import authenticate
+from django.contrib.auth import aauthenticate
 from django.contrib.auth.models import AnonymousUser
 from django.core.signals import setting_changed
 from django.dispatch import receiver
@@ -10,7 +10,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 from ninja.security import HttpBasicAuth as _HttpBasicAuth
 from ninja.security import HttpBearer as _HttpBearer
-from ninja.security import django_auth
+from ninja.security.session import SessionAuth as _SessionAuth
 
 from app_admin.models import Token
 
@@ -39,14 +39,14 @@ def anonymous_fallback(request: HttpRequest):
     return user
 
 
-class HttpBasicAuth(_HttpBasicAuth):
-    def authenticate(
+class AHttpBasicAuth(_HttpBasicAuth):
+    async def authenticate(
         self, request: HttpRequest, username: str, password: str
     ) -> Optional[Any]:
-        user = authenticate(request, username=username, password=password)
+        user = await aauthenticate(request, username=username, password=password)
         if user:
             user.last_login = timezone.now()
-            user.save(update_fields=("last_login",))
+            await user.asave(update_fields=("last_login",))
             request.user = user
 
             async def auser():
@@ -64,26 +64,26 @@ class TokenExpired(Exception):
     pass
 
 
-class HttpBearer(_HttpBearer):
-    def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
+class AHttpBearer(_HttpBearer):
+    async def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
         token_obj: Token
         try:
-            token_obj = Token.objects.get(key=token)
+            token_obj = await Token.objects.aget(key=token)
         except Token.DoesNotExist:
             raise TokenInvalid
 
         if token_obj.expires_at is not None:
             now = timezone.now()
             if token_obj.expires_at <= now:
-                token_obj.delete()
+                await token_obj.adelete()
                 raise TokenExpired
 
             token_obj.expires_at = now + _TOKEN_EXPIRY_INTERVAL
-            token_obj.save(update_fields=("expires_at",))
+            await token_obj.asave(update_fields=("expires_at",))
 
         user = token_obj.user
         user.last_login = timezone.now()
-        user.save(update_fields=("last_login",))
+        await user.asave(update_fields=("last_login",))
         request.user = user
 
         async def auser():
@@ -94,5 +94,16 @@ class HttpBearer(_HttpBearer):
         return token_obj
 
 
-must_auth = [django_auth, HttpBasicAuth(), HttpBearer()]
+class ASessionAuth(_SessionAuth):
+    async def authenticate(
+        self, request: HttpRequest, key: Optional[str]
+    ) -> Optional[Any]:
+        user = await request.auser()
+        if user.is_authenticated:
+            return user
+
+        return None
+
+
+must_auth = [ASessionAuth(), AHttpBasicAuth(), AHttpBearer()]
 auth_optional = must_auth + [anonymous_fallback]
