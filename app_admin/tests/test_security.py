@@ -1,24 +1,31 @@
 import datetime
 from unittest.mock import Mock
 
+from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest
 from django.test import TestCase
 from django.utils import timezone
 
 from app_admin.models import Token, User
-from app_admin.security import HttpBasicAuth, HttpBearer, TokenExpired, TokenInvalid
+from app_admin.security import (
+    AHttpBasicAuth,
+    AHttpBearer,
+    TokenExpired,
+    TokenInvalid,
+    ASessionAuth,
+)
 
 
-class HttpBasicAuthTestCase(TestCase):
-    def test_authenticate(self):
-        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
+class AHttpBasicAuthTestCase(TestCase):
+    async def test_authenticate(self):
+        user = await User.objects.acreate_user("user1", "test@test.com", "P4ssw0rd!")
 
-        auth = HttpBasicAuth()
+        auth = AHttpBasicAuth()
         self.assertIsNone(
-            auth.authenticate(Mock(HttpRequest), "test@test.com", "bad_password")
+            await auth.authenticate(Mock(HttpRequest), "test@test.com", "bad_password")
         )
 
-        user = auth.authenticate(Mock(HttpRequest), "test@test.com", "P4ssw0rd!")
+        user = await auth.authenticate(Mock(HttpRequest), "test@test.com", "P4ssw0rd!")
         self.assertIsInstance(user, User)
         assert isinstance(user, User)
         last_login = user.last_login
@@ -26,38 +33,58 @@ class HttpBasicAuthTestCase(TestCase):
         self.assertLessEqual(abs((timezone.now() - last_login).total_seconds()), 5.0)
 
 
-class HttpBearerAuthTestCase(TestCase):
-    def test_authenticate(self):
-        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
-        token = Token.objects.create(user=user)
+class AHttpBearerAuthTestCase(TestCase):
+    async def test_authenticate(self):
+        user = await User.objects.acreate_user("user1", "test@test.com", "P4ssw0rd!")
+        token = await Token.objects.acreate(user=user)
 
-        auth = HttpBearer()
+        auth = AHttpBearer()
         with self.assertRaises(TokenInvalid):
-            auth.authenticate(Mock(HttpRequest), "bad_token")
+            await auth.authenticate(Mock(HttpRequest), "bad_token")
 
-        token_ = auth.authenticate(Mock(HttpRequest), token.key)
+        token_ = await auth.authenticate(Mock(HttpRequest), token.key)
         self.assertIsInstance(token_, Token)
         assert isinstance(token_, Token)
         last_login = token_.user.last_login
         assert isinstance(last_login, datetime.datetime), last_login
         self.assertLessEqual(abs((timezone.now() - last_login).total_seconds()), 5.0)
 
-    def test_authenticate_with_expiry(self):
-        user = User.objects.create_user("user1", "test@test.com", "P4ssw0rd!")
-        token = Token.objects.create(
+    async def test_authenticate_with_expiry(self):
+        user = await User.objects.acreate_user("user1", "test@test.com", "P4ssw0rd!")
+        token = await Token.objects.acreate(
             user=user, expires_at=(timezone.now() + datetime.timedelta(minutes=5))
         )
 
-        auth = HttpBearer()
-        token_ = auth.authenticate(Mock(HttpRequest), token.key)
+        auth = AHttpBearer()
+        token_ = await auth.authenticate(Mock(HttpRequest), token.key)
         self.assertIsInstance(token_, Token)
         assert isinstance(token_, Token)
         last_login = token_.user.last_login
         assert isinstance(last_login, datetime.datetime), last_login
         self.assertLessEqual(abs((timezone.now() - last_login).total_seconds()), 5.0)
 
-        token = Token.objects.create(
+        token = await Token.objects.acreate(
             user=user, expires_at=(timezone.now() + datetime.timedelta(minutes=-5))
         )
         with self.assertRaises(TokenExpired):
-            auth.authenticate(Mock(HttpRequest), token.key)
+            await auth.authenticate(Mock(HttpRequest), token.key)
+
+
+class ASessionAuthTestCase(TestCase):
+    async def test_authenticate(self):
+        user = AnonymousUser()
+
+        auth = ASessionAuth()
+
+        request = Mock(HttpRequest)
+
+        async def auser():
+            return user
+
+        request.auser = auser
+
+        self.assertIsNone(await auth.authenticate(request, None))
+
+        user = await User.objects.acreate_user("user1", "test@test.com", "P4ssw0rd!")
+
+        self.assertIsNotNone(await auth.authenticate(request, None))

@@ -68,7 +68,7 @@ class AHttpBearer(_HttpBearer):
     async def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
         token_obj: Token
         try:
-            token_obj = await Token.objects.aget(key=token)
+            token_obj = await Token.objects.select_related("user").aget(key=token)
         except Token.DoesNotExist:
             raise TokenInvalid
 
