@@ -4,7 +4,7 @@ from django.db import connection
 from django.db.models import Q, Exists, Min, OuterRef
 from django.http import HttpRequest
 
-from art.models import Chapter
+from art.models import Chapter, Story, Tag
 from query_utils.search.convertto import (
     Bool,
     DateTime,
@@ -34,6 +34,17 @@ def _story_isPublished(request: HttpRequest, search_obj: str) -> Q:
         q = ~q
 
     return q
+
+
+def _story_tags(request: HttpRequest, search_obj: str) -> Q:
+    Story_tags = Story.tags.through
+    return Q(
+        uuid__in=Story_tags.objects.filter(
+            tag_id__in=Tag.objects.filter(
+                name__in=StrList.convertto(search_obj)
+            ).values("name")
+        ).values("story_id")
+    )
 
 
 search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
@@ -75,6 +86,10 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
             .values("story_id")
         ),
         "isPublished": _story_isPublished,
+        "tags": _story_tags,
+        "authorName": lambda request, search_obj: Q(
+            author__username__icontains=search_obj
+        ),
     },
     "chapter": {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),

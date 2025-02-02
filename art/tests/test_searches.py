@@ -45,6 +45,8 @@ class AllSearchesTestCase(TestCase):
                 "publishedAt_exact": ["2018-11-26 00:00:00+0000"],
                 "publishedAt_delta": ["older_than:10h"],
                 "isPublished": ["true", "false"],
+                "tags": ["disney", "marvel,spongebob"],
+                "authorName": ["test"],
             },
         },
         "chapter": {
