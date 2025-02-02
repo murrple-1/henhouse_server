@@ -120,7 +120,7 @@ class SchemasDBTestCase(TestCase):
         story = Story.objects.create(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -166,7 +166,7 @@ class SchemasDBTestCase(TestCase):
         story = Story.objects.create(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 

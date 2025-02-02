@@ -76,7 +76,7 @@ class StoryOutSchema(ModelSchema):
 
     class Meta:
         model = Story
-        fields = ["uuid", "title", "synopsis", "creator"]
+        fields = ["uuid", "title", "synopsis", "author"]
 
     @staticmethod
     def annotate_for_schema(qs: QuerySet[Story]) -> QuerySet[Story]:
@@ -101,7 +101,7 @@ class StoryOutDetailsSchema(ModelSchema):
 
     class Meta:
         model = Story
-        fields = ["uuid", "title", "synopsis", "creator", "tags"]
+        fields = ["uuid", "title", "synopsis", "author", "tags"]
 
     @staticmethod
     def annotate_for_schema(qs: QuerySet[Story]) -> QuerySet[Story]:

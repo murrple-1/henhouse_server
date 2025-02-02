@@ -55,7 +55,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -97,7 +97,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -117,7 +117,7 @@ class ApiTestCase(TestCase):
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "tags": [],
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -144,7 +144,7 @@ class ApiTestCase(TestCase):
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
                 "tags": [],
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -179,7 +179,7 @@ class ApiTestCase(TestCase):
                 "title": "Test Story 1",
                 "synopsis": "Test Story 1 Synopsis",
                 "category": category.name,
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
             },
         )
 
@@ -205,7 +205,7 @@ class ApiTestCase(TestCase):
                 "title": "Test Story 2",
                 "synopsis": "Test Story 2 Synopsis",
                 "category": category.name,
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
             },
         )
 
@@ -300,7 +300,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -315,7 +315,7 @@ class ApiTestCase(TestCase):
                 "title": "Test Story",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -338,7 +338,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -362,7 +362,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "Test Story Synopsis",
                 "uuid": str(story.uuid),
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -385,7 +385,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "New Story Synopsis",
                 "uuid": str(story.uuid),
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": category.name,
             },
         )
@@ -412,7 +412,7 @@ class ApiTestCase(TestCase):
                 "title": "New Story Title",
                 "synopsis": "New Story Synopsis",
                 "uuid": str(story.uuid),
-                "creator": str(user.uuid),
+                "author": str(user.uuid),
                 "category": new_category.name,
             },
         )
@@ -444,7 +444,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -465,7 +465,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -486,7 +486,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -505,7 +505,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -532,7 +532,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -555,7 +555,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -665,7 +665,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -747,7 +747,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -785,7 +785,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -816,7 +816,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -847,7 +847,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -969,7 +969,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -1004,7 +1004,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 
@@ -1033,7 +1033,7 @@ class ApiTestCase(TestCase):
         story = await Story.objects.acreate(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 

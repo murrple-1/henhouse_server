@@ -9,7 +9,7 @@ class Story(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     title = models.TextField()
     synopsis = models.CharField(max_length=256)
-    creator = models.ForeignKey(
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="stories", on_delete=models.CASCADE
     )
     created_at = models.DateTimeField(default=timezone.now)

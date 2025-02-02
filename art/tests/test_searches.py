@@ -36,7 +36,7 @@ class AllSearchesTestCase(TestCase):
                 "title_exact": ["test"],
                 "storyText": ["test"],
                 "synopsis": ["test"],
-                "creator": [str(uuid.uuid4())],
+                "author": [str(uuid.uuid4())],
                 "category": ["test", "test1,test2"],
                 "createdAt": ["2018-11-23 00:00:00+0000|2018-11-26 00:00:00+0000"],
                 "createdAt_exact": ["2018-11-26 00:00:00+0000"],
@@ -133,7 +133,7 @@ class SearchesTestCase(TestCase):
         story = Story.objects.create(
             title="Test Story",
             synopsis="Test Story Synopsis",
-            creator=user,
+            author=user,
             category=category,
         )
 

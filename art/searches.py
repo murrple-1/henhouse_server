@@ -41,8 +41,8 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
         "uuid": lambda request, search_obj: Q(uuid__in=UuidList.convertto(search_obj)),
         "title_exact": lambda request, search_obj: Q(title__iexact=search_obj),
         "synopsis": lambda request, search_obj: Q(synopsis__icontains=search_obj),
-        "creator": lambda request, search_obj: Q(
-            creator_id__in=UuidList.convertto(search_obj)
+        "author": lambda request, search_obj: Q(
+            author_id__in=UuidList.convertto(search_obj)
         ),
         "category": lambda request, search_obj: Q(
             category_id__in=StrList.convertto(search_obj)

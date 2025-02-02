@@ -11,22 +11,22 @@ from art.models import Category, Chapter, Story, Tag
 
 class Command(BaseCommand):
     def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument("default_creator_username")
+        parser.add_argument("default_author_username")
         parser.add_argument("default_category")
 
     def handle(self, *args: Any, **options: Any) -> None:
         now = timezone.now()
 
-        default_creator: User
+        default_author: User
         try:
-            default_creator = User.objects.get(
-                username=options["default_creator_username"]
+            default_author = User.objects.get(
+                username=options["default_author_username"]
             )
         except User.DoesNotExist as e:
-            raise CommandError("default creator not found") from e
+            raise CommandError("default author not found") from e
 
-        creators: dict[str, User] = {
-            default_creator.username: default_creator,
+        authors: dict[str, User] = {
+            default_author.username: default_author,
         }
 
         default_category: Category
@@ -49,18 +49,18 @@ class Command(BaseCommand):
             story_tag_pretty_names = frozenset(story_json["tags"])
             tag_pretty_names.update(story_tag_pretty_names)
 
-            creator: User | None
-            if (creator_username := story_json.get("creator")) is not None:
-                creator = creators.get(creator_username)
-                if creator is None:
+            author: User | None
+            if (author_username := story_json.get("author")) is not None:
+                author = authors.get(author_username)
+                if author is None:
                     try:
-                        creator = User.objects.get(username=creator_username)
+                        author = User.objects.get(username=author_username)
                     except User.DoesNotExist:
-                        creator = default_creator
+                        author = default_author
 
-                    creators[creator_username] = creator
+                    authors[author_username] = author
             else:
-                creator = default_creator
+                author = default_author
 
             category: Category | None
             if (category_name := story_json.get("category")) is not None:
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             story = Story(
                 title=story_json["title"],
                 synopsis=synopsis,
-                creator=creator,
+                author=author,
                 category=category,
             )
             setattr(

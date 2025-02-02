@@ -11,10 +11,10 @@ class ChaptersInline(admin.TabularInline):
 
 @admin.register(Story)
 class StoryAdmin(admin.ModelAdmin):
-    list_display = ["title", "creator", "is_nsfw"]
+    list_display = ["title", "author", "is_nsfw"]
     list_filter = ["is_nsfw"]
     ordering = ["title"]
-    search_fields = ["title", "creator__email"]
+    search_fields = ["title", "author__email"]
     inlines = [ChaptersInline]
 
 
