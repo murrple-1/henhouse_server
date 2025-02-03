@@ -27,7 +27,7 @@ def _load_global_settings(*args: Any, **kwargs: Any):
 _load_global_settings()
 
 
-def anonymous_fallback(request: HttpRequest):
+async def anonymous_fallback(request: HttpRequest):
     user = AnonymousUser()
     request.user = user
 

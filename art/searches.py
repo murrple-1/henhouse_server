@@ -36,13 +36,11 @@ def _story_isPublished(request: HttpRequest, search_obj: str) -> Q:
     return q
 
 
-def _story_tags(request: HttpRequest, search_obj: str) -> Q:
+def _story_tag(request: HttpRequest, search_obj: str) -> Q:
     Story_tags = Story.tags.through
     return Q(
         uuid__in=Story_tags.objects.filter(
-            tag_id__in=Tag.objects.filter(
-                name__in=StrList.convertto(search_obj)
-            ).values("name")
+            tag_id__in=Tag.objects.filter(name=search_obj).values("name")
         ).values("story_id")
     )
 
@@ -86,7 +84,7 @@ search_fns: dict[str, dict[str, Callable[[HttpRequest, str], Q]]] = {
             .values("story_id")
         ),
         "isPublished": _story_isPublished,
-        "tags": _story_tags,
+        "tag": _story_tag,
         "authorName": lambda request, search_obj: Q(
             author__username__icontains=search_obj
         ),

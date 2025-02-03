@@ -60,7 +60,7 @@ class Chapter(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid_extensions.uuid7)
     story = models.ForeignKey(Story, related_name="chapters", on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
-    synopsis = models.CharField(max_length=256)
+    synopsis = models.CharField(max_length=256, blank=True)
     index = models.PositiveIntegerField()
     markdown = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
