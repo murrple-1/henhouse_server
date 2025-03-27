@@ -1,6 +1,5 @@
 import datetime
 from typing import Any, Dict
-import unittest
 import uuid
 from unittest.mock import Mock
 
@@ -35,9 +34,6 @@ class TestAsyncClient(TestAsyncClient_):
 
 
 class ApiTestCase(TestCase):
-    @unittest.skip(
-        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
-    )
     async def test_list_stories(self):
         test_client = TestAsyncClient(router)
 
@@ -72,13 +68,26 @@ class ApiTestCase(TestCase):
 
         response = await test_client.get("/story", user=user)
         self.assertEqual(response.status_code, 200, response.content)
+        json_ = response.json()
+        self.assertIsInstance(json_, dict)
+        self.assertIn("items", json_)
+        json_items = json_["items"]
+        self.assertIsInstance(json_items, list)
+        self.assertEqual(len(json_items), 1)
+        entry_json = json_items[0]
+        self.assertIsInstance(entry_json, dict)
+        datetime.datetime.fromisoformat(entry_json.pop("createdAt"))
+        self.assertIsNone(entry_json.pop("publishedAt"))
         self.assertEqual(
-            response.json(),
+            json_,
             {
                 "items": [
                     {
                         "title": "Test Story",
+                        "synopsis": "Test Story Synopsis",
                         "uuid": str(story.uuid),
+                        "author": str(user.uuid),
+                        "category": category.name,
                     }
                 ],
                 "count": 1,
@@ -539,9 +548,6 @@ class ApiTestCase(TestCase):
         response = await test_client.delete(f"/story/{story.uuid}")
         self.assertEqual(response.status_code, 401, response.content)
 
-    @unittest.skip(
-        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
-    )
     async def test_list_chapters(self):
         test_client = TestAsyncClient(router)
 
@@ -602,6 +608,7 @@ class ApiTestCase(TestCase):
                             "uuid": str(chapter1.uuid),
                             "index": chapter1.index,
                             "name": chapter1.name,
+                            "synopsis": chapter1.synopsis,
                         }
                     ],
                 },
@@ -636,9 +643,6 @@ class ApiTestCase(TestCase):
 
         assert_single_entry_response(response)
 
-    @unittest.skip(
-        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
-    )
     async def test_list_chapters_notfound(self):
         test_client = TestAsyncClient(router)
 
@@ -1054,9 +1058,6 @@ class ApiTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 404, response.content)
 
-    @unittest.skip(
-        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
-    )
     async def test_list_categories(self):
         test_client = TestAsyncClient(router)
 
@@ -1064,13 +1065,25 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"count": 0, "items": []})
 
-        await Category.objects.acreate(
+        category = await Category.objects.acreate(
             name="test", pretty_name="Test", description="Description", sort_key=0
         )
 
         response = await test_client.get("/category")
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertEqual(response.json(), {"count": 1, "items": []})
+        self.assertEqual(
+            response.json(),
+            {
+                "count": 1,
+                "items": [
+                    {
+                        "prettyName": category.pretty_name,
+                        "name": category.name,
+                        "description": "Description",
+                    }
+                ],
+            },
+        )
 
     async def test_category_details(self):
         test_client = TestAsyncClient(router)
@@ -1096,9 +1109,6 @@ class ApiTestCase(TestCase):
         response = await test_client.get("/category/notfound")
         self.assertEqual(response.status_code, 404, response.content)
 
-    @unittest.skip(
-        "skip until https://github.com/vitalik/django-ninja/pull/1340 is resolved"
-    )
     async def test_list_tags(self):
         test_client = TestAsyncClient(router)
 
@@ -1106,11 +1116,22 @@ class ApiTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), {"count": 0, "items": []})
 
-        await Tag.objects.acreate(name="test", pretty_name="Test")
+        tag = await Tag.objects.acreate(name="test", pretty_name="Test")
 
         response = await test_client.get("/tag")
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertEqual(response.json(), {"count": 1, "items": []})
+        self.assertEqual(
+            response.json(),
+            {
+                "count": 1,
+                "items": [
+                    {
+                        "prettyName": tag.pretty_name,
+                        "name": tag.name,
+                    },
+                ],
+            },
+        )
 
     async def test_tag_details(self):
         test_client = TestAsyncClient(router)
