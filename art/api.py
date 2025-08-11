@@ -28,6 +28,7 @@ from art.schemas import (
     TagOutSchema,
 )
 
+# TODO maybe improve performance https://archive.li/rxzuU ?
 router = RouterPaginated()
 
 
