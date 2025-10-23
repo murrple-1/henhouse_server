@@ -78,7 +78,7 @@ async def story_details(request: HttpRequest, story_id: uuid.UUID):
             .aget(uuid=story_id)
         )
     except Story.DoesNotExist:
-        raise Http404
+        raise Http404("story not found")
 
 
 @router.post("/story", response=StoryOutSchema, auth=must_auth, tags=["story"])
@@ -90,12 +90,12 @@ async def create_story(request: HttpRequest, input_story: StoryInSchema):
     try:
         category = await Category.objects.aget(name=input_story.category)
     except Category.DoesNotExist:
-        raise Http404
+        raise Http404("category not found")
 
     tag_uuids = frozenset(input_story.tags)
     tags: list[Tag] = [t async for t in Tag.objects.filter(name__in=tag_uuids)]
     if len(tag_uuids) != len(tags):
-        raise Http404
+        raise Http404("tag not found")
 
     return await _create_story_transaction(user, input_story, category, tags)
 
@@ -134,7 +134,7 @@ async def patch_story(
             author=user, uuid=story_id
         )
     except Story.DoesNotExist:
-        raise Http404
+        raise Http404("story not found")
 
     update_fields: set[str] = set()
 
@@ -151,7 +151,7 @@ async def patch_story(
         try:
             category = await Category.objects.aget(name=input_story.category)
         except Category.DoesNotExist:
-            raise Http404
+            raise Http404("category not found")
 
         story.category = category
         update_fields.add("category")
@@ -161,7 +161,7 @@ async def patch_story(
         tag_uuids = frozenset(input_story.tags)
         tags = [t async for t in Tag.objects.filter(name__in=tag_uuids)]
         if len(tag_uuids) != len(tags):
-            raise Http404
+            raise Http404("tag not found")
 
     await _patch_story_transaction(story, update_fields, tags)
 
@@ -187,7 +187,7 @@ async def delete_story(request: HttpRequest, story_id: uuid.UUID):
     assert isinstance(user, AbstractBaseUser)
     count, _ = await Story.objects.filter(author=user, uuid=story_id).adelete()
     if not count:
-        raise Http404
+        raise Http404("story not found")
 
     return None
 
@@ -214,7 +214,7 @@ async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
             .aget(uuid=story_id)
         )
     except Story.DoesNotExist:
-        raise Http404
+        raise Http404("story not found")
 
     chapter_qs: QuerySet[Chapter]
     if user.is_authenticated and story.author_id == user.pk:
@@ -245,7 +245,7 @@ async def chapter_details(request: HttpRequest, chapter_id: uuid.UUID):
     try:
         return await accessible_chapters.aget(uuid=chapter_id)
     except Chapter.DoesNotExist:
-        raise Http404
+        raise Http404("chapter not found")
 
 
 @router.post(
@@ -262,7 +262,7 @@ async def create_chapter(
     try:
         story = await Story.objects.aget(author=user, uuid=story_id)
     except Story.DoesNotExist:
-        raise Http404
+        raise Http404("story not found")
 
     index = (
         await Chapter.objects.filter(story=story).aaggregate(
@@ -293,7 +293,7 @@ async def patch_chapter(
     try:
         chapter = await Chapter.objects.aget(story__author=user, uuid=chapter_id)
     except Chapter.DoesNotExist:
-        raise Http404
+        raise Http404("chapter not found")
 
     update_fields: set[str] = set()
 
@@ -324,7 +324,7 @@ async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
         story__author=user, uuid=chapter_id
     ).adelete()
     if not count:
-        raise Http404
+        raise Http404("chapter not found")
 
     return None
 
@@ -352,7 +352,7 @@ async def category_details(request: HttpRequest, category_name: str):
     try:
         return await Category.objects.aget(name=category_name)
     except Category.DoesNotExist:
-        raise Http404
+        raise Http404("category not found")
 
 
 @router.get("/tag", response=list[TagOutSchema], auth=auth_optional, tags=["tag"])
@@ -373,4 +373,4 @@ async def tag_details(request: HttpRequest, tag_name: str):
     try:
         return await Tag.objects.aget(name=tag_name)
     except Tag.DoesNotExist:
-        raise Http404
+        raise Http404("tag not found")
