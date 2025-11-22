@@ -1,10 +1,11 @@
+import logging
 import uuid
 from typing import Iterable
 
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import AbstractBaseUser
-from django.db import transaction
-from django.db.models import Max, Q, QuerySet, Value
+from django.db import DatabaseError, transaction
+from django.db.models import F, Max, Q, QuerySet, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest
 from ninja import Query
@@ -27,6 +28,8 @@ from art.schemas import (
     TagOutDetailsSchema,
     TagOutSchema,
 )
+
+_logger = logging.getLogger(__name__)
 
 # TODO maybe improve performance https://archive.li/rxzuU ?
 router = RouterPaginated()
@@ -226,6 +229,51 @@ async def list_chapters(request: HttpRequest, story_id: uuid.UUID):
 
 
 @router.get(
+    "/story/{story_id}/chapter/{chapter_num}",
+    response=ChapterOutDetailsSchema,
+    auth=auth_optional,
+    tags=["chapter"],
+)
+async def story_chapter_details(
+    request: HttpRequest, story_id: uuid.UUID, chapter_num: int
+):
+    user = await request.auser()
+    filter_args: list[Q]
+    if user.is_authenticated:
+        filter_args = [(Q(author=user) | Q(published_at__isnull=False))]
+    else:
+        filter_args = [Q(published_at__isnull=False)]
+
+    story: Story
+    try:
+        story = await (
+            Story.annotate_from_chapters(Story.objects.all())
+            .filter(*filter_args)
+            .aget(uuid=story_id)
+        )
+    except Story.DoesNotExist:
+        raise Http404("story not found")
+
+    accessible_chapters: QuerySet[Chapter]
+    if user.is_authenticated and story.author_id == user.pk:
+        accessible_chapters = story.chapters.all()
+    else:
+        accessible_chapters = story.chapters.filter(published_at__isnull=False)
+
+    return await _story_chapter_details_access(accessible_chapters, chapter_num)
+
+
+@sync_to_async
+def _story_chapter_details_access(
+    accessible_chapters: QuerySet[Chapter], chapter_num: int
+):
+    try:
+        return accessible_chapters.order_by("index")[chapter_num]
+    except IndexError:
+        raise Http404("chapter not found")
+
+
+@router.get(
     "/chapter/{chapter_id}",
     response=ChapterOutDetailsSchema,
     auth=auth_optional,
@@ -320,13 +368,27 @@ async def patch_chapter(
 async def delete_chapter(request: HttpRequest, chapter_id: uuid.UUID):
     user = await request.auser()
     assert isinstance(user, AbstractBaseUser)
-    count, _ = await Chapter.objects.filter(
-        story__author=user, uuid=chapter_id
-    ).adelete()
-    if not count:
-        raise Http404("chapter not found")
+    await _delete_chapter_transaction(user, chapter_id)
 
     return None
+
+
+@sync_to_async
+def _delete_chapter_transaction(user: AbstractBaseUser, chapter_id: uuid.UUID):
+    try:
+        with transaction.atomic():
+            chapter = Chapter.objects.select_for_update(nowait=True).get(
+                story__author=user, uuid=chapter_id
+            )
+            Chapter.objects.filter(
+                story_id=chapter.story_id, index__gt=chapter.index
+            ).update(index=(F("index") - 1))
+            chapter.delete()
+    except Chapter.DoesNotExist:
+        raise Http404("chapter not found")
+    except DatabaseError:
+        _logger.warning("current access during chapter deletion")
+        raise Http404("chapter not found")
 
 
 @router.get(
