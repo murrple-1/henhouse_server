@@ -22,6 +22,25 @@ class EmailBackend(ModelBackend):
             if user.check_password(password) and self.user_can_authenticate(user):
                 return user
 
+    async def aauthenticate(
+        self,
+        request: HttpRequest | None,
+        username: str | None = None,
+        password: str | None = None,
+        **kwargs: Any,
+    ):
+        try:
+            user = await UserModel.objects.aget(email__iexact=username)
+        except UserModel.DoesNotExist:
+            # Run the default password hasher once to reduce the timing
+            # difference between an existing and a nonexistent user (#20760).
+            UserModel().set_password(password)
+        else:
+            if await user.acheck_password(password) and self.user_can_authenticate(
+                user
+            ):
+                return user
+
     def get_user(self, user_id: Any):
         try:
             user = UserModel.objects.get(pk=user_id)

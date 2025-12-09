@@ -5,7 +5,7 @@ from app_admin.security import TokenExpired, TokenInvalid
 from art.api import router as art_router
 from app_admin.api import router as app_admin_router
 
-api = NinjaAPI(csrf=True)
+api = NinjaAPI()
 
 
 @api.exception_handler(TokenInvalid)

@@ -2,6 +2,8 @@ import datetime
 import os
 from pathlib import Path
 
+from django.utils.csp import CSP
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,7 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "csp.middleware.CSPMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "silk.middleware.SilkyMiddleware",
 ]
 
@@ -262,6 +264,10 @@ CSRF_COOKIE_SECURE = os.getenv("APP_CSRF_COOKIE_SECURE", "true") == "true"
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_DOMAIN = os.getenv("APP_CSRF_COOKIE_DOMAIN", "localhost")
 
+SECURE_CSP = {
+    "script-src-attr": (CSP.SELF, CSP.UNSAFE_INLINE),
+}
+
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
@@ -300,10 +306,6 @@ SILKY_MAX_REQUEST_BODY_SIZE = int(
 SILKY_MAX_RESPONSE_BODY_SIZE = int(
     os.getenv("APP_SILKY_MAX_RESPONSE_BODY_SIZE", "8192")
 )  # 8kb
-
-
-# django-csp
-CSP_SCRIPT_SRC_ATTR = ("'self'", "'unsafe-inline'")
 
 # app
 _test_runner_type = os.getenv("TEST_RUNNER_TYPE", "standard").lower()
